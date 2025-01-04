@@ -1,4 +1,4 @@
-import e from 'express';
+import express from 'express';
 import User from '../models/user.model.js';//The controller imports the User model from the models/user.model.js file.
 import bcrypt from 'bcrypt';//The controller imports the bcrypt library to hash the password before saving it to the database.
 
