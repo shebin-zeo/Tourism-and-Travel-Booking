@@ -12,9 +12,12 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "js": "^0.1.0",
     "mongoose": "^8.9.3",
     "nodemon": "^3.0.1"
+    
   }
 }
