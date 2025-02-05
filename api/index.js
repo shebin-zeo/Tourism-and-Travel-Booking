@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import userRouter from './routes/user.route.js'; // Import the userRouter from the routes/user.route.js file for api calls.
 import authRouter from './routes/auth.route.js'; // Import the authRouter from the routes/auth.route.js file for api calls.
 import cookieParser from 'cookie-parser';
+import createAdmin from './utils/createAdmin.js';
 dotenv.config();
 mongoose
     .connect(process.env.MONGO).then(() => {
@@ -20,12 +21,14 @@ app.use(cookieParser()); // The cookieParser() middleware is used to parse cooki
 
 app.listen(3000, () => {
   console.log('Server is running on port 3000 !!!');
+  createAdmin();
 });
 
 
 
 app.use('/api/user', userRouter); // Use the userRouter for all routes that start with /api/user.
 app.use('/api/auth', authRouter); // Use the authRouter for all routes that start with /api/auth.
+
 app.use((err,req,res,next)=>{
     const statusCode=err.statusCode||500;
     const message=err.message||'Internal Server Error';

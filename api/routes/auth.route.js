@@ -1,13 +1,15 @@
+// In auth.route.js
 import express from 'express';
-import { signOut, signup } from '../controllers/auth.controller.js';
-import { signin } from '../controllers/auth.controller.js';
-import { google } from '../controllers/auth.controller.js';
+import { signup, signin, google, signOut, adminSignin } from '../controllers/auth.controller.js';
 
 const router = express.Router();
 
 router.post('/signup', signup);
 router.post('/signin', signin);
-router.post('/google',google);
-router.get('/signout',signOut);
+router.post('/google', google);
+router.get('/signout', signOut);
+
+// Add admin signin route:
+router.post('/admin/signin', adminSignin);
 
 export default router;
