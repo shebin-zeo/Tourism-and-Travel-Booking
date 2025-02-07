@@ -5,6 +5,7 @@ import userRouter from './routes/user.route.js'; // Import the userRouter from t
 import authRouter from './routes/auth.route.js'; // Import the authRouter from the routes/auth.route.js file for api calls.
 import cookieParser from 'cookie-parser';
 import createAdmin from './utils/createAdmin.js';
+import listingRouter from './routes/listing.routes.js';
 dotenv.config();
 mongoose
     .connect(process.env.MONGO).then(() => {
@@ -28,6 +29,7 @@ app.listen(3000, () => {
 
 app.use('/api/user', userRouter); // Use the userRouter for all routes that start with /api/user.
 app.use('/api/auth', authRouter); // Use the authRouter for all routes that start with /api/auth.
+app.use('/api/listing', listingRouter);
 
 app.use((err,req,res,next)=>{
     const statusCode=err.statusCode||500;

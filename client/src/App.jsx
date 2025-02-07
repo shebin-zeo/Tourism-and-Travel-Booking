@@ -10,6 +10,7 @@ import PrivateRoute from "./componets/PrivateRoute"
 import AdminSignIn from "./pages/AdminSignIn";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminPrivateRoute from "./componets/AdminPrivateRoute";
+import CreatePackage from "./pages/CreatePackage"
 export default function App() {
   return (
     <BrowserRouter>
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/admin/signin" element={<AdminSignIn />} />
         <Route element={<AdminPrivateRoute />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/create-package" element={<CreatePackage />} />
           {/* Add more admin-only routes here */}
         </Route>
       </Routes>
