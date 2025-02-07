@@ -19,8 +19,14 @@ export default function CreatePackage() {
     duration: 0,
     itinerary: '',
   });
+
   const [imageUploadError, setImageUploadError] = useState('');
   const [uploading, setUploading] = useState(false);
+
+  // State to control modals
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Cloudinary image upload function
   const handleImageSubmit = () => {
@@ -30,7 +36,6 @@ export default function CreatePackage() {
     }
     setUploading(true);
     setImageUploadError('');
-
     window.cloudinary.openUploadWidget(
       {
         cloud_name: 'drqoa7h5u',
@@ -75,9 +80,38 @@ export default function CreatePackage() {
     }));
   };
 
-  // Handle checkbox changes (if you prefer to keep separate state, merge it on submit)
+  // Handle checkbox changes
   const handleCheckboxChange = (e, setter) => {
     setter(e.target.checked);
+  };
+
+  // Function to reset the form for a new package creation
+  const resetForm = () => {
+    setFormData({
+      imageUrls: [],
+      package_title: '',
+      description: '',
+      destination: '',
+      package_type: '',
+      regular_price: 0,
+      discount: 0,
+      duration: 0,
+      itinerary: '',
+    });
+    setOffer(false);
+    setAccommodations(false);
+    setTransport(false);
+  };
+
+  // Close the success modal and reset the form so the admin can create a new package
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    resetForm();
+  };
+
+  // Close the error modal without resetting the form
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false);
   };
 
   // Handle form submission to send data to MongoDB
@@ -86,20 +120,20 @@ export default function CreatePackage() {
 
     // Prepare the full data object by merging checkbox states
     const dataToSend = {
-      title: formData.package_title,  // 'package_title' to 'title'
+      title: formData.package_title, // 'package_title' to 'title'
       description: formData.description,
       destination: formData.destination,
-      packageType: formData.package_type,  // 'package_type' to 'packageType'
+      packageType: formData.package_type, // 'package_type' to 'packageType'
       duration: formData.duration,
-      regularPrice: formData.regular_price,  // 'regular_price' to 'regularPrice'
-      discountPrice: formData.discount,  // 'discount' to 'discountPrice'
+      regularPrice: formData.regular_price, // 'regular_price' to 'regularPrice'
+      discountPrice: formData.discount, // 'discount' to 'discountPrice'
       offer,
       accommodations,
       transport,
-      itinerary: formData.itinerary.split("\n"),  // Assuming itinerary is entered with line breaks
+      itinerary: formData.itinerary.split("\n"), // Assuming itinerary is entered with line breaks
       imageUrls: formData.imageUrls,
-      adminRef: '65f3a1234567890abcdef',  // admin reference (you'll replace with actual value)
-      guideRef: '65f3b9876543210fedcba',  // guide reference (you'll replace with actual value)
+      adminRef: '65f3a1234567890abcdef', // Replace with actual admin reference
+      guideRef: '65f3b9876543210fedcba', // Replace with actual guide reference
     };
 
     // Check for missing required fields before submitting
@@ -113,7 +147,8 @@ export default function CreatePackage() {
       !dataToSend.duration ||
       !dataToSend.itinerary
     ) {
-      alert('Please fill all required fields.');
+      setErrorMessage('Please fill all required fields.');
+      setShowErrorModal(true);
       return;
     }
 
@@ -126,18 +161,24 @@ export default function CreatePackage() {
       const result = await res.json();
 
       if (!res.ok) {
-        console.error('Error:', result.message);
+        setErrorMessage(result.message || 'Error creating package.');
+        setShowErrorModal(true);
         return;
       }
+
       console.log('Package created successfully:', result.package);
-      // Optionally, redirect or reset the form here
+
+      // Show the success modal on successful package creation
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Error creating package:', error);
+      setErrorMessage('Error creating package. Please try again.');
+      setShowErrorModal(true);
     }
   };
 
   return (
-    <main className="container mx-auto p-8 bg-white shadow-lg rounded-lg">
+    <main className="container mx-auto p-8 bg-white shadow-lg rounded-lg relative">
       <h1 className="text-3xl font-bold text-center text-indigo-600 mb-6">
         Create a New Tour Package
       </h1>
@@ -354,6 +395,44 @@ export default function CreatePackage() {
           </button>
         </div>
       </form>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 mx-4">
+            <h2 className="text-2xl font-bold text-indigo-600 mb-4 text-center">Success!</h2>
+            <p className="text-gray-700 mb-6 text-center">
+              The package has been created successfully.
+            </p>
+            <div className="flex justify-center">
+              <button
+                onClick={handleCloseSuccessModal}
+                className="px-6 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              >
+                Create New Package
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 mx-4">
+            <h2 className="text-2xl font-bold text-red-600 mb-4 text-center">Error</h2>
+            <p className="text-gray-700 mb-6 text-center">{errorMessage}</p>
+            <div className="flex justify-center">
+              <button
+                onClick={handleCloseErrorModal}
+                className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
