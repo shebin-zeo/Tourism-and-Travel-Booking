@@ -1,4 +1,6 @@
 import Listing from '../models/listing.model.js';
+
+// Create a new listing
 export const createListing = async (req, res, next) => {
   try {
     const listing = await Listing.create(req.body);
@@ -7,10 +9,10 @@ export const createListing = async (req, res, next) => {
     next(error);
   }
 };
-// NEW: Function to get all listings
+
+// Get all listings (public)
 export const getListings = async (req, res, next) => {
   try {
-    // You can add sorting or filtering as needed.
     const listings = await Listing.find({}).sort({ createdAt: -1 });
     return res.status(200).json({ success: true, listings });
   } catch (error) {
@@ -18,7 +20,21 @@ export const getListings = async (req, res, next) => {
   }
 };
 
-// Update a listing by ID
+// NEW: Get a single listing by ID (public)
+export const getListing = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const listing = await Listing.findById(id);
+    if (!listing) {
+      return res.status(404).json({ success: false, message: 'Listing not found' });
+    }
+    return res.status(200).json({ success: true, listing });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Update a listing by ID (protected)
 export const updateListing = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -32,7 +48,7 @@ export const updateListing = async (req, res, next) => {
   }
 };
 
-// Delete a listing by ID
+// Delete a listing by ID (protected)
 export const deleteListing = async (req, res, next) => {
   try {
     const { id } = req.params;

@@ -1,22 +1,23 @@
 import express from 'express';
-import { createListing,
-    getListings,
-    updateListing,
-    deleteListing } 
-    from '../controllers/listing.controller.js';
-import { verifyToken } from '../utils/verifyUser.js'; // Correct import
+import {
+  createListing,
+  getListings,
+  getListing, // NEW controller for a single listing
+  updateListing,
+  deleteListing
+} from '../controllers/listing.controller.js';
+import { verifyToken } from '../utils/verifyUser.js';
 
 const router = express.Router();
 
+// Public routes for fetching listings
+router.get('/', getListings);
+router.get('/:id', getListing);
+
+// Protected routes (require a valid token)
 router.post('/create', verifyToken, createListing);
-// NEW: GET route for retrieving all listings
-router.get('/', verifyToken, getListings);
-
-// Update a listing by its ID
 router.put('/:id', verifyToken, updateListing);
-
-// Delete a listing by its ID
 router.delete('/:id', verifyToken, deleteListing);
 
-
 export default router;
+ 
