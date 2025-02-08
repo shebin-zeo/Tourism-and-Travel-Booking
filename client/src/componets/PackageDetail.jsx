@@ -1,6 +1,8 @@
+// PackageDetails.js
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Slider from 'react-slick';
+import { useSelector } from 'react-redux';
 
 // Import slick-carousel CSS files
 import "slick-carousel/slick/slick.css"; 
@@ -8,21 +10,30 @@ import "slick-carousel/slick/slick-theme.css";
 
 export default function PackageDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
+
+  // Get the current user from Redux state
+  const currentUser = useSelector((state) => state.user.currentUser);
+
   const [pkg, setPkg] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  // State for full image modal view
+  // For full image modal view
   const [fullImageModal, setFullImageModal] = useState(false);
   const [currentImage, setCurrentImage] = useState('');
+  
+  // For sign in popup modal
+  const [showSignInPopup, setShowSignInPopup] = useState(false);
 
+  // Fetch package details from backend
   useEffect(() => {
-    const fetchPackage = async () => {
+    async function fetchPackage() {
       setLoading(true);
       try {
         const res = await fetch(`/api/listing/${id}`, {
           method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' }
         });
         const data = await res.json();
         if (!res.ok) {
@@ -35,8 +46,7 @@ export default function PackageDetails() {
       } finally {
         setLoading(false);
       }
-    };
-
+    }
     fetchPackage();
   }, [id]);
 
@@ -50,16 +60,25 @@ export default function PackageDetails() {
     slidesToScroll: 1,
   };
 
-  // Open modal with full image view
-  const openFullImage = (imgUrl) => {
-    setCurrentImage(imgUrl);
+  // Handlers to open/close the full image modal
+  const openFullImage = (url) => {
+    setCurrentImage(url);
     setFullImageModal(true);
   };
-
-  // Close the full image modal
   const closeFullImage = () => {
     setFullImageModal(false);
     setCurrentImage('');
+  };
+
+  // Handle the Book Now button click.
+  // If currentUser exists, navigate to the booking page.
+  // Otherwise, display the sign in popup.
+  const handleBookNow = () => {
+    if (currentUser && currentUser._id) {
+      navigate(`/booking/${pkg._id}`);
+    } else {
+      setShowSignInPopup(true);
+    }
   };
 
   if (loading) {
@@ -69,7 +88,6 @@ export default function PackageDetails() {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="container mx-auto p-8">
@@ -77,7 +95,6 @@ export default function PackageDetails() {
       </div>
     );
   }
-
   if (!pkg) {
     return (
       <div className="container mx-auto p-8">
@@ -97,12 +114,12 @@ export default function PackageDetails() {
                 <img
                   src={url}
                   alt={`${pkg.title} ${index + 1}`}
-                  className="w-full h-96 object-cover cursor-pointer"
+                  className="w-full h-96 object-cover cursor-pointer transition-transform duration-300 hover:scale-105"
                   onClick={() => openFullImage(url)}
                 />
                 <button
                   onClick={() => openFullImage(url)}
-                  className="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded hover:bg-opacity-75"
+                  className="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded hover:bg-opacity-75 transition duration-200"
                 >
                   View Full Image
                 </button>
@@ -121,11 +138,11 @@ export default function PackageDetails() {
               <img
                 src={currentImage}
                 alt="Full View"
-                className="max-w-full max-h-screen rounded"
+                className="max-w-full max-h-screen rounded shadow-lg"
               />
               <button
                 onClick={closeFullImage}
-                className="absolute top-2 right-2 bg-gray-800 bg-opacity-75 text-white p-2 rounded-full"
+                className="absolute top-2 right-2 bg-gray-800 bg-opacity-75 text-white p-2 rounded-full hover:bg-opacity-100 transition duration-200"
               >
                 ✕
               </button>
@@ -156,7 +173,6 @@ export default function PackageDetails() {
             </div>
           </div>
 
-          {/* Itinerary Section */}
           {pkg.itinerary && pkg.itinerary.length > 0 && (
             <div className="mt-6">
               <h2 className="text-2xl font-bold mb-2">Itinerary</h2>
@@ -168,7 +184,6 @@ export default function PackageDetails() {
             </div>
           )}
 
-          {/* Additional Information */}
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-gray-100 p-4 rounded-lg">
               <p className="font-semibold">Accommodations:</p>
@@ -183,8 +198,56 @@ export default function PackageDetails() {
               <p>{pkg.offer ? 'Yes' : 'No'}</p>
             </div>
           </div>
+          
+          {/* Book Now Button */}
+          <div className="mt-8">
+            <button
+              onClick={handleBookNow}
+              className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 transition duration-200 shadow-lg"
+            >
+              Book Now
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Sign In / Sign Up Popup Modal */}
+      {showSignInPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-2xl max-w-sm mx-auto p-6">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Sign In Required</h2>
+            <p className="mb-6 text-gray-600">
+              Please sign in or sign up to book this package.
+            </p>
+            <div className="flex flex-col space-y-4">
+              <button
+                onClick={() => {
+                  setShowSignInPopup(false);
+                  navigate('/sign-in');
+                }}
+                className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition duration-200 shadow"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => {
+                  setShowSignInPopup(false);
+                  navigate('/sign-up');
+                }}
+                className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition duration-200 shadow"
+              >
+                Sign Up
+              </button>
+              <button
+                onClick={() => setShowSignInPopup(false)}
+                className="w-full bg-gray-600 text-white py-2 rounded hover:bg-gray-700 transition duration-200 shadow"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
