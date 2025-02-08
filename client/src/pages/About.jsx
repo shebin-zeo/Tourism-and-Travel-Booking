@@ -135,7 +135,7 @@ export default function About() {
             Let us be a part of your journey. Whether you are booking your first trip or your next adventure, we are here to make your travel dreams a reality.
           </p>
           <a
-            href="#"
+            href="/"
             className="inline-block px-8 py-4 bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-full font-semibold hover:bg-gradient-to-l transition-colors duration-300"
           >
             Start Your Journey

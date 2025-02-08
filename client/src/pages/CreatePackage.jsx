@@ -243,6 +243,9 @@ export default function CreatePackage() {
             <option value="Adventure">Adventure</option>
             <option value="Relaxation">Relaxation</option>
             <option value="Cultural">Cultural</option>
+            <option value="Luxury">Luxury</option>
+            <option value="Island"> Island </option>
+            <option value="Historical">Historical</option>
           </select>
         </div>
 
