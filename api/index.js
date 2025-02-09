@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import createAdmin from './utils/createAdmin.js';
 import listingRouter from './routes/listing.routes.js';
 import bookingRoutes from './routes/booking.route.js';
+import blogRoutes from './routes/blog.routes.js';
 dotenv.config();
 mongoose
     .connect(process.env.MONGO).then(() => {
@@ -33,6 +34,7 @@ app.use('/api/auth', authRouter); // Use the authRouter for all routes that star
 app.use('/api/listing', listingRouter); //Package listing routes
 // Mount the booking routes
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/blog', blogRoutes);
 
 app.use((err,req,res,next)=>{
     const statusCode=err.statusCode||500;

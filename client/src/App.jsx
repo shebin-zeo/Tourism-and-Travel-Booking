@@ -19,6 +19,13 @@ import ManageUser from"./componets/ManageUser"
 import Packages from "./componets/Packages";
 import PackageDetails from "./componets/PackageDetail";
 
+
+//Blog related routes
+import BlogSubmit from "./componets/BlogSubmit";
+import ManageBlog from "./componets/ManageBlog";
+import BlogList from "./pages/BlogList";
+import BlogDetail from "./pages/Blogdetails";
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -34,10 +41,14 @@ export default function App() {
         <Route path="/packages" element={<Packages />} />
         <Route path="/package/:id" element={<PackageDetails />} />
         <Route path="/booking/:id" element={<BookingPage />} />
+        {/* New Routes for viewing Blogs */}
+        <Route path="/blogs" element={<BlogList />} />
+        <Route path="/blog/:id" element={<BlogDetail />} />
 
         {/* Private user routes */}
         <Route element={<PrivateRoute />}>
           <Route path="profile" element={<Profile />} />
+          <Route path="/blog/submit" element={<BlogSubmit />} />
         </Route>
       </Routes>
 
@@ -50,6 +61,7 @@ export default function App() {
           <Route path="/admin/manage-packages" element={<ManagePackages />} />
           <Route path="/admin/manage-bookings" element={<ManageBooking />} />
           <Route path="admin/manage-users" element={<ManageUser/>}/>
+          <Route path="admin/manage-blog" element={<ManageBlog/>}/>
           {/* Add more admin-only routes here */}
         </Route>
       </Routes>

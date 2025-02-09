@@ -45,6 +45,18 @@ export default function Header() {
                 </Link>
               </li>
               <li>
+                <Link to="/blogs" className="text-white hover:text-yellow-300">
+                  Blogs
+                </Link>
+              </li>
+              {currentUser && (
+                <li>
+                  <Link to="/blog/submit" className="text-white hover:text-yellow-300">
+                    Mark Journey
+                  </Link>
+                </li>
+              )}
+              <li>
                 <Link to="/profile" className="flex items-center">
                   {currentUser ? (
                     <img
