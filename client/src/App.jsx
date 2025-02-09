@@ -13,6 +13,7 @@ import CreatePackage from "./pages/CreatePackage";
 import ManagePackages from "./pages/ManagePackages";
 import BookingPage from './pages/BookPackage';
 import ManageBooking from "./pages/ManageBooking"
+import ManageUser from"./componets/ManageUser"
 
 // New public components for package listing and detail
 import Packages from "./componets/Packages";
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="/admin/create-package" element={<CreatePackage />} />
           <Route path="/admin/manage-packages" element={<ManagePackages />} />
           <Route path="/admin/manage-bookings" element={<ManageBooking />} />
+          <Route path="admin/manage-users" element={<ManageUser/>}/>
           {/* Add more admin-only routes here */}
         </Route>
       </Routes>

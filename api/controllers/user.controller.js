@@ -45,3 +45,40 @@ export const deleteUser = async (req, res, next) => {
   }
 
 };
+
+//Admin user management
+
+export const getUsersAdmin = async (req, res, next) => {
+  try {
+    const users = await User.find({}).sort({ createdAt: -1 });
+    return res.status(200).json({ success: true, users });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateUserAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const updatedUser = await User.findByIdAndUpdate(id, req.body, { new: true });
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    return res.status(200).json({ success: true, user: updatedUser });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteUserAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const deletedUser = await User.findByIdAndDelete(id);
+    if (!deletedUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    return res.status(200).json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
