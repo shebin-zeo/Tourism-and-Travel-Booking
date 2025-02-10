@@ -26,7 +26,7 @@ const blogPostSchema = new mongoose.Schema(
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User', // Reference to a User model (if available)
-      required: false,
+      required: true,
     },
     approved: {
       type: Boolean,

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+// src/components/ManageBlog.jsx
+import { useState, useEffect } from "react";
 import { FaCheck, FaTrash, FaTimes, FaEye } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -7,10 +8,8 @@ export default function ManageBlog() {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  // For custom delete modal.
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedBlogToDelete, setSelectedBlogToDelete] = useState(null);
-  // NEW: For viewing blog content.
   const [selectedBlogToView, setSelectedBlogToView] = useState(null);
 
   useEffect(() => {
@@ -21,8 +20,10 @@ export default function ManageBlog() {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": token ? `Bearer ${token}` : ""
-          }
+            "Authorization": token ? `Bearer ${token}` : "",
+          },
+          // Include credentials if needed:
+          // credentials: "include"
         });
         const contentType = res.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
@@ -32,7 +33,7 @@ export default function ManageBlog() {
         if (!res.ok) {
           throw new Error(data.message || "Failed to fetch blog posts");
         }
-        // Assume backend returns { success: true, blogPosts: [...] }
+        // Expecting data.blogPosts to contain blog posts with populated 'author'
         setBlogs(data.blogPosts);
       } catch (err) {
         setError(err.message);
@@ -51,8 +52,9 @@ export default function ManageBlog() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : ""
-        }
+          "Authorization": token ? `Bearer ${token}` : "",
+        },
+        // credentials: "include"
       });
       const data = await res.json();
       if (!res.ok) {
@@ -69,19 +71,19 @@ export default function ManageBlog() {
     }
   }
 
-  // Open the custom delete modal (to reject a blog post).
+  // Open the delete modal.
   function openDeleteModal(blogId) {
     setSelectedBlogToDelete(blogId);
     setShowDeleteModal(true);
   }
 
-  // Close the custom delete modal.
+  // Close the delete modal.
   function closeDeleteModal() {
     setSelectedBlogToDelete(null);
     setShowDeleteModal(false);
   }
 
-  // Confirm deletion (reject the blog post).
+  // Confirm deletion.
   async function confirmDelete() {
     if (!selectedBlogToDelete) return;
     try {
@@ -90,8 +92,9 @@ export default function ManageBlog() {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : ""
-        }
+          "Authorization": token ? `Bearer ${token}` : "",
+        },
+        // credentials: "include"
       });
       const contentType = res.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
@@ -112,12 +115,12 @@ export default function ManageBlog() {
     }
   }
 
-  // Open the view modal for a blog post.
+  // Open view modal.
   function openViewModal(blog) {
     setSelectedBlogToView(blog);
   }
 
-  // Close the view modal.
+  // Close view modal.
   function closeViewModal() {
     setSelectedBlogToView(null);
   }
@@ -164,7 +167,11 @@ export default function ManageBlog() {
                   <td className="px-4 py-2 border text-sm">{blog._id}</td>
                   <td className="px-4 py-2 border text-sm">{blog.title}</td>
                   <td className="px-4 py-2 border text-sm">
-                    {blog.username || "Unknown"}
+                    {blog.author && blog.author.username
+                      ? blog.author.username
+                      : blog.author && blog.author.email
+                      ? blog.author.email
+                      : "Unknown"}
                   </td>
                   <td className="px-4 py-2 border text-sm">
                     {new Date(blog.createdAt).toLocaleDateString()}
@@ -203,7 +210,6 @@ export default function ManageBlog() {
         </div>
       )}
 
-      {/* View Blog Modal */}
       {selectedBlogToView && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
@@ -246,7 +252,6 @@ export default function ManageBlog() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-2xl max-w-sm mx-auto p-6">

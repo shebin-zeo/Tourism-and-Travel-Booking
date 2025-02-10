@@ -14,7 +14,7 @@ export const createBlogPost = async (req, res, next) => {
       content,
       review,
       images, // Must match your model's field name
-      author: req.user._id,
+      author: req.user.id,
       approved: false, // Default to not approved until admin approves
     });
     return res.status(201).json({ success: true, blogPost });
@@ -53,13 +53,15 @@ export const getBlogPostById = async (req, res, next) => {
 // ADMIN: Get all blog posts (for moderation)
 export const getAllBlogPosts = async (req, res, next) => {
   try {
-    const blogPosts = await BlogPost.find({}).populate('author', 'name');
+    // Populate the 'author' field with 'username' and 'email' from the User model.
+    const blogPosts = await BlogPost.find({})
+      .populate('author', 'username email')
+      .sort({ createdAt: -1 });
     return res.status(200).json({ success: true, blogPosts });
   } catch (error) {
     next(error);
   }
 };
-
 // ADMIN: Approve a blog post
 export const approveBlogPost = async (req, res, next) => {
   try {

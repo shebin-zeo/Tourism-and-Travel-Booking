@@ -1,20 +1,15 @@
-// AdminBookings.jsx
 import { useEffect, useState } from 'react';
-import { FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaTimes, FaCheck } from 'react-icons/fa';
 
 export default function AdminBookings() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  // Control which booking details are expanded.
   const [expandedBookingId, setExpandedBookingId] = useState(null);
-  // States for custom delete modal.
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [bookingToDelete, setBookingToDelete] = useState(null);
-  // Notification state.
   const [notification, setNotification] = useState({ message: '', type: '', visible: false });
 
-  // Helper to show notifications for 3 seconds.
   const showNotification = (message, type) => {
     setNotification({ message, type, visible: true });
     setTimeout(() => {
@@ -32,8 +27,8 @@ export default function AdminBookings() {
             'Content-Type': 'application/json',
             'Authorization': token ? `Bearer ${token}` : '',
           },
+          credentials: "include", // If you're using cookies; otherwise, not needed if using headers.
         });
-        // Ensure the response is JSON.
         const contentType = res.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
           throw new Error('Server did not return JSON. Please check the backend.');
@@ -52,24 +47,46 @@ export default function AdminBookings() {
     fetchBookings();
   }, []);
 
-  // Toggle expanded details for a booking.
   const toggleExpanded = (bookingId) => {
     setExpandedBookingId(expandedBookingId === bookingId ? null : bookingId);
   };
 
-  // Open the custom delete modal.
+  const handleApprove = async (bookingId) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`/api/bookings/approve/${bookingId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to approve booking');
+      }
+      showNotification('Booking approved successfully!', 'success');
+      setBookings((prevBookings) =>
+        prevBookings.map((b) =>
+          b._id === bookingId ? { ...b, approved: true } : b
+        )
+      );
+    } catch (err) {
+      showNotification(err.message, 'error');
+    }
+  };
+
   const openDeleteModal = (bookingId) => {
     setBookingToDelete(bookingId);
     setShowDeleteModal(true);
   };
 
-  // Close the custom delete modal.
   const closeDeleteModal = () => {
     setBookingToDelete(null);
     setShowDeleteModal(false);
   };
 
-  // Confirm deletion: call backend DELETE, update state, and show notification.
   const confirmDelete = async () => {
     if (!bookingToDelete) return;
     try {
@@ -80,6 +97,7 @@ export default function AdminBookings() {
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : '',
         },
+        credentials: "include",
       });
       const contentType = res.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
@@ -89,8 +107,7 @@ export default function AdminBookings() {
       if (!res.ok) {
         throw new Error(data.message || 'Failed to delete booking');
       }
-      // Update the bookings state.
-      setBookings(bookings.filter((b) => b._id !== bookingToDelete));
+      setBookings(prev => prev.filter(b => b._id !== bookingToDelete));
       showNotification('Booking deleted successfully!', 'success');
     } catch (err) {
       showNotification(err.message, 'error');
@@ -105,6 +122,7 @@ export default function AdminBookings() {
   if (error) {
     return <div className="container mx-auto p-4 text-red-600">Error: {error}</div>;
   }
+
   return (
     <main className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6 text-center text-indigo-600">
@@ -136,7 +154,9 @@ export default function AdminBookings() {
                       : booking.package}
                   </td>
                   <td className="px-4 py-2 border text-sm">
-                    {booking.user && booking.user.email ? booking.user.email : 'N/A'}
+                    {booking.user && (booking.user.username || booking.user.email)
+                      ? booking.user.username || booking.user.email
+                      : "N/A"}
                   </td>
                   <td className="px-4 py-2 border text-sm">
                     {new Date(booking.bookingDate).toLocaleString()}
@@ -144,6 +164,14 @@ export default function AdminBookings() {
                   <td className="px-4 py-2 border text-sm">{booking.travellers.length}</td>
                   <td className="px-4 py-2 border text-sm">
                     <div className="flex space-x-2">
+                      {!booking.approved && (
+                        <button
+                          onClick={() => handleApprove(booking._id)}
+                          className="flex items-center bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition duration-200"
+                        >
+                          <FaCheck className="mr-1" /> Approve
+                        </button>
+                      )}
                       <button
                         onClick={() => toggleExpanded(booking._id)}
                         className="flex items-center bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition duration-200"
@@ -184,17 +212,19 @@ export default function AdminBookings() {
                   <span className="font-semibold">Booking ID:</span> {booking._id}
                 </p>
                 <p>
-                  <span className="font-semibold">Package:</span>{' '}
+                  <span className="font-semibold">Package:</span>{" "}
                   {booking.package && booking.package.title
                     ? booking.package.title
                     : booking.package}
                 </p>
                 <p>
-                  <span className="font-semibold">User:</span>{' '}
-                  {booking.user && booking.user.email ? booking.user.email : 'N/A'}
+                  <span className="font-semibold">User:</span>{" "}
+                  {booking.user && (booking.user.username || booking.user.email)
+                    ? booking.user.username || booking.user.email
+                    : "N/A"}
                 </p>
                 <p>
-                  <span className="font-semibold">Booking Date:</span>{' '}
+                  <span className="font-semibold">Booking Date:</span>{" "}
                   {new Date(booking.bookingDate).toLocaleString()}
                 </p>
                 <h3 className="text-xl font-semibold mt-4 mb-2">Traveller Details:</h3>
@@ -214,8 +244,8 @@ export default function AdminBookings() {
                         <span className="font-semibold">Country:</span> {traveller.country}
                       </p>
                       <p>
-                        <span className="font-semibold">Preferences:</span>{' '}
-                        {traveller.preferences || 'None'}
+                        <span className="font-semibold">Preferences:</span>{" "}
+                        {traveller.preferences || "None"}
                       </p>
                       <p>
                         <span className="font-semibold">Contact:</span> {traveller.contact}
@@ -262,7 +292,7 @@ export default function AdminBookings() {
 
       {notification.visible && (
         <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 border border-gray-200 z-50">
-          <p className={`text-lg ${notification.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+          <p className={`text-lg ${notification.type === "success" ? "text-green-600" : "text-red-600"}`}>
             {notification.message}
           </p>
         </div>
