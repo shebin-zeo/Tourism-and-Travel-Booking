@@ -1,34 +1,36 @@
-import { useEffect, useState } from 'react';
-import { FaCheck, FaTrash, FaTimes } from 'react-icons/fa';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { useEffect, useState } from "react";
+import { FaCheck, FaTrash, FaTimes, FaEye } from "react-icons/fa";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function ManageBlog() {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   // For custom delete modal.
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedBlogToDelete, setSelectedBlogToDelete] = useState(null);
+  // NEW: For viewing blog content.
+  const [selectedBlogToView, setSelectedBlogToView] = useState(null);
 
   useEffect(() => {
     async function fetchBlogs() {
       try {
-        const token = localStorage.getItem('access_token');
-        const res = await fetch('/api/blog/admin/all', {
-          method: 'GET',
+        const token = localStorage.getItem("access_token");
+        const res = await fetch("/api/blog/admin/all", {
+          method: "GET",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token ? `Bearer ${token}` : ''
+            "Content-Type": "application/json",
+            "Authorization": token ? `Bearer ${token}` : ""
           }
         });
-        const contentType = res.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error('Server did not return JSON. Please check the backend.');
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("Server did not return JSON. Please check the backend.");
         }
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data.message || 'Failed to fetch blog posts');
+          throw new Error(data.message || "Failed to fetch blog posts");
         }
         // Assume backend returns { success: true, blogPosts: [...] }
         setBlogs(data.blogPosts);
@@ -44,19 +46,19 @@ export default function ManageBlog() {
   // Approve a blog post.
   async function handleApprove(blogId) {
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem("access_token");
       const res = await fetch(`/api/blog/admin/approve/${blogId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
+          "Content-Type": "application/json",
+          "Authorization": token ? `Bearer ${token}` : ""
         }
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || 'Failed to approve blog post');
+        throw new Error(data.message || "Failed to approve blog post");
       }
-      toast.success('Blog post approved successfully!');
+      toast.success("Blog post approved successfully!");
       setBlogs((prevBlogs) =>
         prevBlogs.map((blog) =>
           blog._id === blogId ? { ...blog, approved: true } : blog
@@ -83,23 +85,23 @@ export default function ManageBlog() {
   async function confirmDelete() {
     if (!selectedBlogToDelete) return;
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem("access_token");
       const res = await fetch(`/api/blog/admin/${selectedBlogToDelete}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
+          "Content-Type": "application/json",
+          "Authorization": token ? `Bearer ${token}` : ""
         }
       });
-      const contentType = res.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Server did not return JSON on deletion.');
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server did not return JSON on deletion.");
       }
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || 'Failed to delete blog post');
+        throw new Error(data.message || "Failed to delete blog post");
       }
-      toast.success('Blog post rejected and deleted successfully!');
+      toast.success("Blog post rejected and deleted successfully!");
       setBlogs((prevBlogs) =>
         prevBlogs.filter((blog) => blog._id !== selectedBlogToDelete)
       );
@@ -108,6 +110,16 @@ export default function ManageBlog() {
     } finally {
       closeDeleteModal();
     }
+  }
+
+  // Open the view modal for a blog post.
+  function openViewModal(blog) {
+    setSelectedBlogToView(blog);
+  }
+
+  // Close the view modal.
+  function closeViewModal() {
+    setSelectedBlogToView(null);
   }
 
   if (loading) {
@@ -152,16 +164,22 @@ export default function ManageBlog() {
                   <td className="px-4 py-2 border text-sm">{blog._id}</td>
                   <td className="px-4 py-2 border text-sm">{blog.title}</td>
                   <td className="px-4 py-2 border text-sm">
-                    {blog.username || 'Unknown'}
+                    {blog.username || "Unknown"}
                   </td>
                   <td className="px-4 py-2 border text-sm">
                     {new Date(blog.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-2 border text-sm">
-                    {blog.approved ? 'Approved' : 'Pending'}
+                    {blog.approved ? "Approved" : "Pending"}
                   </td>
                   <td className="px-4 py-2 border text-sm">
                     <div className="flex space-x-2">
+                      <button
+                        onClick={() => openViewModal(blog)}
+                        className="flex items-center bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 transition duration-200"
+                      >
+                        <FaEye className="mr-1" /> View Content
+                      </button>
                       {!blog.approved && (
                         <button
                           onClick={() => handleApprove(blog._id)}
@@ -184,6 +202,51 @@ export default function ManageBlog() {
           </table>
         </div>
       )}
+
+      {/* View Blog Modal */}
+      {selectedBlogToView && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
+          onClick={closeViewModal}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl p-6 max-w-5xl w-full max-h-screen overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-3xl font-bold text-indigo-600">
+                {selectedBlogToView.title}
+              </h2>
+              <button onClick={closeViewModal} className="text-gray-600 hover:text-gray-900">
+                <FaTimes size={24} />
+              </button>
+            </div>
+            <div className="mb-4">
+              <p className="text-gray-700">{selectedBlogToView.content}</p>
+            </div>
+            {selectedBlogToView.review && (
+              <div className="mb-4 p-4 bg-gray-100 rounded-lg border">
+                <h3 className="text-2xl font-semibold mb-2">Review</h3>
+                <p className="text-gray-700">{selectedBlogToView.review}</p>
+              </div>
+            )}
+            {selectedBlogToView.images && selectedBlogToView.images.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {selectedBlogToView.images.map((img, index) => (
+                  <img
+                    key={index}
+                    src={img}
+                    alt={`Blog image ${index + 1}`}
+                    className="rounded-lg shadow-md"
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-2xl max-w-sm mx-auto p-6">
@@ -210,6 +273,8 @@ export default function ManageBlog() {
           </div>
         </div>
       )}
+
+      <ToastContainer position="bottom-right" autoClose={3000} />
     </main>
   );
 }
