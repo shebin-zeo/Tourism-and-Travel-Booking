@@ -1,5 +1,5 @@
-// booking.model.js
-import mongoose from 'mongoose';
+// models/booking.model.js
+import mongoose from "mongoose";
 
 const travellerSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -13,25 +13,31 @@ const travellerSchema = new mongoose.Schema({
 
 const bookingSchema = new mongoose.Schema(
   {
-    package: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: 'Listing', 
-      required: true 
+    package: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Listing",
+      required: true,
     },
-    // If you don't require the user, you can set required: false.
-    user: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: 'User', 
-      required: false 
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,  // Change to true to require a user for every booking.
     },
     travellers: [travellerSchema],
-    bookingDate: { 
-      type: Date, 
-      default: Date.now 
+    bookingDate: {
+      type: Date,
+      default: Date.now,
+    },
+    approved: {
+      type: Boolean,
+      default: false,
+    },
+    approvedAt: {
+      type: Date,
     },
   },
   { timestamps: true }
 );
 
-const Booking = mongoose.model('Booking', bookingSchema);
+const Booking = mongoose.model("Booking", bookingSchema);
 export default Booking;
