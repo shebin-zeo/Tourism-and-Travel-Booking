@@ -14,6 +14,22 @@ export const getBookings = async (req, res, next) => {
   }
 };
 
+// GET bookings for the currently logged-in user.
+export const getMyBookings = async (req, res, next) => {
+  try {
+    // Make sure req.user is set by your verifyToken middleware.
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: 'User must be logged in to view bookings' });
+    }
+    const bookings = await Booking.find({ user: req.user.id })
+      .populate('package', 'title')  // Show the package title
+      .sort({ createdAt: -1 });
+    return res.status(200).json({ success: true, bookings });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Create a booking (User must be logged in)
 export const createBooking = async (req, res, next) => {
   try {

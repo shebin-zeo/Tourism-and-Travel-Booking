@@ -12,8 +12,11 @@ import AdminPrivateRoute from "./componets/AdminPrivateRoute";
 import CreatePackage from "./pages/CreatePackage";
 import ManagePackages from "./pages/ManagePackages";
 import BookingPage from './pages/BookPackage';
+
+//Booking realated details
 import ManageBooking from "./pages/ManageBooking"
 import ManageUser from"./componets/ManageUser"
+import UserBookings from "./pages/UserBookings";
 
 // New public components for package listing and detail
 import Packages from "./componets/Packages";
@@ -49,6 +52,7 @@ export default function App() {
         <Route element={<PrivateRoute />}>
           <Route path="profile" element={<Profile />} />
           <Route path="/blog/submit" element={<BlogSubmit />} />
+          <Route path="/my-bookings" element={<UserBookings />} />
         </Route>
       </Routes>
 
