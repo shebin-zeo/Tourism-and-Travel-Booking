@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
-import { FaEdit, FaTrash, FaTimes, FaCheck } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaTimes, FaCheck, FaUserPlus } from 'react-icons/fa';
 
 export default function AdminBookings() {
   const [bookings, setBookings] = useState([]);
+  const [availableGuides, setAvailableGuides] = useState([]); // List of guides
+  const [selectedGuideId, setSelectedGuideId] = useState(''); // Selected guide from dropdown
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedBookingId, setExpandedBookingId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [bookingToDelete, setBookingToDelete] = useState(null);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [bookingToAssign, setBookingToAssign] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [notification, setNotification] = useState({ message: '', type: '', visible: false });
 
   const showNotification = (message, type) => {
@@ -17,6 +22,7 @@ export default function AdminBookings() {
     }, 3000);
   };
 
+  // Fetch bookings on mount
   useEffect(() => {
     async function fetchBookings() {
       try {
@@ -27,7 +33,7 @@ export default function AdminBookings() {
             'Content-Type': 'application/json',
             'Authorization': token ? `Bearer ${token}` : '',
           },
-          credentials: "include", // If you're using cookies; otherwise, not needed if using headers.
+          credentials: "include",
         });
         const contentType = res.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
@@ -46,6 +52,32 @@ export default function AdminBookings() {
     }
     fetchBookings();
   }, []);
+
+  // Fetch available guides when assign modal is opened
+  useEffect(() => {
+    async function fetchGuides() {
+      try {
+        const token = localStorage.getItem('access_token');
+        const res = await fetch('/api/guide/all', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : '',
+          },
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || 'Failed to fetch guides');
+        }
+        setAvailableGuides(data.guides);
+      } catch (err) {
+        showNotification(err.message, 'error');
+      }
+    }
+    if (isAssignModalOpen) {
+      fetchGuides();
+    }
+  }, [isAssignModalOpen]);
 
   const toggleExpanded = (bookingId) => {
     setExpandedBookingId(expandedBookingId === bookingId ? null : bookingId);
@@ -67,8 +99,8 @@ export default function AdminBookings() {
         throw new Error(data.message || 'Failed to approve booking');
       }
       showNotification('Booking approved successfully!', 'success');
-      setBookings((prevBookings) =>
-        prevBookings.map((b) =>
+      setBookings((prev) =>
+        prev.map((b) =>
           b._id === bookingId ? { ...b, approved: true } : b
         )
       );
@@ -90,6 +122,7 @@ export default function AdminBookings() {
   const confirmDelete = async () => {
     if (!bookingToDelete) return;
     try {
+      setDeleteLoading(true);
       const token = localStorage.getItem('access_token');
       const res = await fetch(`/api/bookings/${bookingToDelete}`, {
         method: 'DELETE',
@@ -112,7 +145,53 @@ export default function AdminBookings() {
     } catch (err) {
       showNotification(err.message, 'error');
     } finally {
+      setDeleteLoading(false);
       closeDeleteModal();
+    }
+  };
+
+  // Assign Guide functions
+  const openAssignModal = (bookingId) => {
+    setBookingToAssign(bookingId);
+    setIsAssignModalOpen(true);
+  };
+
+  const closeAssignModal = () => {
+    setBookingToAssign(null);
+    setSelectedGuideId('');
+    setIsAssignModalOpen(false);
+  };
+
+  const handleAssignGuide = async () => {
+    if (!bookingToAssign || !selectedGuideId) {
+      showNotification("Please select a guide", "error");
+      return;
+    }
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`/api/bookings/assign-guide/${bookingToAssign}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+        body: JSON.stringify({ guide: selectedGuideId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to assign guide');
+      }
+      showNotification('Guide assigned successfully!', 'success');
+      // Update the booking with the assigned guide; assumes data.booking contains updated booking
+      setBookings(prev =>
+        prev.map(b =>
+          b._id === bookingToAssign ? { ...b, guide: data.booking.guide } : b
+        )
+      );
+    } catch (err) {
+      showNotification(err.message, 'error');
+    } finally {
+      closeAssignModal();
     }
   };
 
@@ -140,7 +219,9 @@ export default function AdminBookings() {
                 <th className="px-4 py-2 border">Package</th>
                 <th className="px-4 py-2 border">User</th>
                 <th className="px-4 py-2 border">Booking Date</th>
-                <th className="px-4 py-2 border">No. of Travellers</th>
+                <th className="px-4 py-2 border">Travellers</th>
+                <th className="px-4 py-2 border">Assigned Guide</th>
+                <th className="px-4 py-2 border">Status</th>
                 <th className="px-4 py-2 border">Actions</th>
               </tr>
             </thead>
@@ -151,7 +232,7 @@ export default function AdminBookings() {
                   <td className="px-4 py-2 border text-sm">
                     {booking.package && booking.package.title
                       ? booking.package.title
-                      : booking.package}
+                      : "N/A"}
                   </td>
                   <td className="px-4 py-2 border text-sm">
                     {booking.user && (booking.user.username || booking.user.email)
@@ -162,6 +243,18 @@ export default function AdminBookings() {
                     {new Date(booking.bookingDate).toLocaleString()}
                   </td>
                   <td className="px-4 py-2 border text-sm">{booking.travellers.length}</td>
+                  <td className="px-4 py-2 border text-sm">
+                    {booking.guide
+                      ? booking.guide.username || booking.guide.email
+                      : "Not Assigned"}
+                  </td>
+                  <td className="px-4 py-2 border text-sm">
+                    {booking.completed ? (
+                      <span className="text-green-600 font-bold">Trip Over</span>
+                    ) : (
+                      <span className="text-red-600 font-bold">Active</span>
+                    )}
+                  </td>
                   <td className="px-4 py-2 border text-sm">
                     <div className="flex space-x-2">
                       {!booking.approved && (
@@ -192,6 +285,12 @@ export default function AdminBookings() {
                       >
                         <FaTrash className="mr-1" /> Delete
                       </button>
+                      <button
+                        onClick={() => openAssignModal(booking._id)}
+                        className="flex items-center bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 transition duration-200"
+                      >
+                        <FaUserPlus className="mr-1" /> Assign Guide
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -202,20 +301,18 @@ export default function AdminBookings() {
       )}
 
       {expandedBookingId && (
-        <div className="mt-6">
+        <div className="mt-6 bg-gray-50 p-6 rounded shadow-md">
           {bookings
-            .filter((b) => b._id === expandedBookingId)
-            .map((booking) => (
-              <div key={booking._id} className="bg-gray-50 p-6 rounded shadow-md">
+            .filter(b => b._id === expandedBookingId)
+            .map(booking => (
+              <div key={booking._id}>
                 <h2 className="text-2xl font-bold mb-4">Booking Details</h2>
                 <p>
                   <span className="font-semibold">Booking ID:</span> {booking._id}
                 </p>
                 <p>
                   <span className="font-semibold">Package:</span>{" "}
-                  {booking.package && booking.package.title
-                    ? booking.package.title
-                    : booking.package}
+                  {booking.package && booking.package.title ? booking.package.title : 'N/A'}
                 </p>
                 <p>
                   <span className="font-semibold">User:</span>{" "}
@@ -244,14 +341,19 @@ export default function AdminBookings() {
                         <span className="font-semibold">Country:</span> {traveller.country}
                       </p>
                       <p>
-                        <span className="font-semibold">Preferences:</span>{" "}
-                        {traveller.preferences || "None"}
+                        <span className="font-semibold">Contact:</span> {traveller.contact}{" "}
+                        <a href={`tel:${traveller.contact}`} className="text-blue-600 hover:underline ml-2">
+                          Call
+                        </a>
                       </p>
                       <p>
-                        <span className="font-semibold">Contact:</span> {traveller.contact}
+                        <span className="font-semibold">Email:</span> {traveller.email}{" "}
+                        <a href={`mailto:${traveller.email}`} className="text-blue-600 hover:underline ml-2">
+                          Email
+                        </a>
                       </p>
                       <p>
-                        <span className="font-semibold">Email:</span> {traveller.email}
+                        <span className="font-semibold">Preferences:</span> {traveller.preferences || 'None'}
                       </p>
                     </div>
                   ))
@@ -263,6 +365,7 @@ export default function AdminBookings() {
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-2xl max-w-sm mx-auto p-6">
@@ -274,22 +377,68 @@ export default function AdminBookings() {
             </p>
             <div className="flex space-x-4">
               <button
-                onClick={confirmDelete}
-                className="w-full flex items-center justify-center bg-red-600 text-white py-2 rounded hover:bg-red-700 transition duration-200 shadow"
+                onClick={closeDeleteModal}
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
               >
-                <FaTrash className="mr-1" /> Yes, Delete
+                Cancel
               </button>
               <button
-                onClick={closeDeleteModal}
-                className="w-full flex items-center justify-center bg-gray-600 text-white py-2 rounded hover:bg-gray-700 transition duration-200 shadow"
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition duration-200 shadow"
+                disabled={deleteLoading}
               >
-                <FaTimes className="mr-1" /> Cancel
+                Delete
               </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Assign Guide Modal */}
+      {isAssignModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm">
+            <h2 className="text-2xl font-bold mb-4 text-purple-600 flex items-center">
+              <FaUserPlus className="mr-2" /> Assign Guide
+            </h2>
+            <p className="mb-4 text-gray-600">
+              Select a guide to assign to this booking:
+            </p>
+            <select
+              className="w-full p-2 border rounded mb-4"
+              value={selectedGuideId}
+              onChange={(e) => setSelectedGuideId(e.target.value)}
+            >
+              <option value="">-- Select Guide --</option>
+              {availableGuides && availableGuides.length > 0 ? (
+                availableGuides.map((guide) => (
+                  <option key={guide._id} value={guide._id}>
+                    {guide.username} ({guide.email})
+                  </option>
+                ))
+              ) : (
+                <option value="">No guides available</option>
+              )}
+            </select>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={closeAssignModal}
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAssignGuide}
+                className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+              >
+                Assign
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification Modal */}
       {notification.visible && (
         <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 border border-gray-200 z-50">
           <p className={`text-lg ${notification.type === "success" ? "text-green-600" : "text-red-600"}`}>

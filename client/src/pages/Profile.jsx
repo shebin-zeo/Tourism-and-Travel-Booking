@@ -234,8 +234,9 @@ export default function Profile() {
       {activeTab === "profile" && (
         <div>
           <div className="flex flex-col items-center">
+            {/* For guides, if currentUser.avatar is empty, use a fallback */}
             <img
-              src={currentUser?.avatar || "/default-avatar.png"}
+              src={currentUser?.avatar || "https://www.pngmart.com/files/23/Profile-PNG-Photo.png"}
               alt="Profile"
               className="rounded-full h-24 w-24 object-cover mb-4"
             />

@@ -113,3 +113,33 @@ export const adminSignin = async (req, res, next) => {
     next(error);
   }
 };
+
+//Guide sign in
+export const guideSignIn = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    // Find a user with the provided email and role "guide"
+    const guide = await User.findOne({ email, role: 'guide' });
+    if (!guide) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    const isMatch = await bcrypt.compare(password, guide.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    const token = jwt.sign(
+      { id: guide._id, role: guide.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+    return res.status(200).json({
+      _id: guide._id,
+      username: guide.username,
+      email: guide.email,
+      role: guide.role,
+      token,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

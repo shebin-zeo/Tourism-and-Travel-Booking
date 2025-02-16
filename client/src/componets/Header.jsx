@@ -5,6 +5,9 @@ import { useSelector } from "react-redux";
 export default function Header() {
   const { currentUser } = useSelector((state) => state.user);
 
+  // Define a default avatar URL
+  const defaultAvatar = "https://www.pngmart.com/files/23/Profile-PNG-Photo.png";
+
   return (
     <header className="bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -61,7 +64,7 @@ export default function Header() {
                   {currentUser ? (
                     <img
                       className="h-10 w-10 rounded-full object-cover border-2 border-yellow-300"
-                      src={currentUser.avatar}
+                      src={currentUser.avatar || defaultAvatar}
                       alt="Profile"
                     />
                   ) : (

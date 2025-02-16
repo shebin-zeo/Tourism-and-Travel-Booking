@@ -35,6 +35,17 @@ const bookingSchema = new mongoose.Schema(
     approvedAt: {
       type: Date,
     },
+    // New field for assigned guide:
+    guide: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,  // Not required; can be assigned later
+    },
+    //For take the status
+    completed: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
