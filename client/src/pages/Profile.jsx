@@ -1,6 +1,5 @@
-// src/pages/Profile.jsx
-import { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import {
   updateUserStart,
   updateUserSuccess,
@@ -11,7 +10,7 @@ import {
   signOutUserStart,
   signOutUserSuccess,
   signOutUserFailure,
-} from '../redux/user/userSlice';
+} from "../redux/user/userSlice";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -19,14 +18,14 @@ export default function Profile() {
   const { currentUser, loading, error } = useSelector((state) => state.user);
   const dispatch = useDispatch();
 
-  // Tab state: "profile", "bookings", "blog"
+  // Tab state: "profile", "bookings", "complaints"
   const [activeTab, setActiveTab] = useState("profile");
 
   // Profile form state.
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
+    username: "",
+    email: "",
+    password: "",
   });
   const [updateSuccess, setUpdateSuccess] = useState(false);
 
@@ -35,33 +34,33 @@ export default function Profile() {
   const [bookingsLoading, setBookingsLoading] = useState(true);
   const [bookingsError, setBookingsError] = useState("");
 
-  // Blog submission form state.
-  const [blogFormData, setBlogFormData] = useState({
-    title: '',
-    content: '',
-    review: '',
-    images: '', // Comma separated URLs
+  // Complaint form state.
+  const [complaintForm, setComplaintForm] = useState({
+    targetType: "Listing", // "Listing" for Package; "Guide" for Guide.
+    target: "",
+    message: "",
   });
-  const [blogLoading, setBlogLoading] = useState(false);
-  const [blogError, setBlogError] = useState("");
+  const [complaintLoading, setComplaintLoading] = useState(false);
+  const [complaintError, setComplaintError] = useState("");
+  const [complaints, setComplaints] = useState([]);
 
   // State for showing delete account confirmation modal.
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Initialize profile form data when currentUser changes.
+  // Initialize profile form when currentUser changes.
   useEffect(() => {
     if (currentUser) {
       setFormData({
-        username: currentUser.username || '',
-        email: currentUser.email || '',
-        password: '',
+        username: currentUser.username || "",
+        email: currentUser.email || "",
+        password: "",
       });
     }
   }, [currentUser]);
 
-  // When the "bookings" tab is active, fetch the user's booking history.
+  // Fetch bookings when "bookings" or "complaints" tab is active.
   useEffect(() => {
-    if (activeTab === "bookings" && currentUser) {
+    if ((activeTab === "bookings" || activeTab === "complaints") && currentUser) {
       async function fetchMyBookings() {
         try {
           const token = localStorage.getItem("access_token");
@@ -86,6 +85,34 @@ export default function Profile() {
         }
       }
       fetchMyBookings();
+    }
+  }, [activeTab, currentUser]);
+
+  // Fetch complaints when "complaints" tab is active.
+  useEffect(() => {
+    if (activeTab === "complaints" && currentUser) {
+      async function fetchMyComplaints() {
+        try {
+          const token = localStorage.getItem("access_token");
+          const res = await fetch("/api/complaints/my", {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": token ? `Bearer ${token}` : "",
+            },
+            credentials: "include",
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.message || "Failed to fetch complaints");
+          }
+          setComplaints(data.complaints);
+        } catch (err) {
+          setComplaintError(err.message);
+          toast.error(err.message);
+        }
+      }
+      fetchMyComplaints();
     }
   }, [activeTab, currentUser]);
 
@@ -122,43 +149,40 @@ export default function Profile() {
     }
   };
 
-  // Handle blog form changes.
-  const handleBlogChange = (e) => {
-    setBlogFormData({ ...blogFormData, [e.target.name]: e.target.value });
+  // Handle complaint form changes.
+  const handleComplaintChange = (e) => {
+    setComplaintForm({ ...complaintForm, [e.target.name]: e.target.value });
   };
 
-  // Handle blog submission.
-  const handleBlogSubmit = async (e) => {
+  // Handle complaint submission.
+  const handleComplaintSubmit = async (e) => {
     e.preventDefault();
-    setBlogLoading(true);
-    setBlogError("");
+    setComplaintLoading(true);
+    setComplaintError("");
     try {
       const token = localStorage.getItem("access_token");
-      const res = await fetch("/api/blog/create", {
+      const res = await fetch("/api/complaints", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": token ? `Bearer ${token}` : "",
         },
-        body: JSON.stringify(blogFormData),
+        body: JSON.stringify(complaintForm),
         credentials: "include",
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || "Blog submission failed");
+        throw new Error(data.message || "Complaint submission failed");
       }
-      toast.success("Blog submitted successfully! It will be published after admin approval.");
-      setBlogFormData({
-        title: "",
-        content: "",
-        review: "",
-        images: "",
-      });
+      toast.success("Complaint registered successfully!");
+      // Optionally update local complaint list.
+      setComplaints((prev) => [data.complaint, ...prev]);
+      setComplaintForm({ targetType: "Listing", target: "", message: "" });
     } catch (err) {
-      setBlogError(err.message);
+      setComplaintError(err.message);
       toast.error(err.message);
     } finally {
-      setBlogLoading(false);
+      setComplaintLoading(false);
     }
   };
 
@@ -208,33 +232,32 @@ export default function Profile() {
     <div className="p-4 max-w-4xl mx-auto">
       <ToastContainer position="top-right" autoClose={3000} />
       <h1 className="text-3xl font-bold text-center my-7">Profile</h1>
-      
+
       {/* Tab Navigation */}
       <div className="flex justify-center gap-4 mb-6">
-        <button 
+        <button
           onClick={() => setActiveTab("profile")}
           className={`px-4 py-2 border rounded ${activeTab === "profile" ? "bg-indigo-600 text-white" : "bg-white text-gray-700"}`}
         >
           My Profile
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab("bookings")}
           className={`px-4 py-2 border rounded ${activeTab === "bookings" ? "bg-indigo-600 text-white" : "bg-white text-gray-700"}`}
         >
           My Bookings
         </button>
-        <button 
-          onClick={() => setActiveTab("blog")}
-          className={`px-4 py-2 border rounded ${activeTab === "blog" ? "bg-indigo-600 text-white" : "bg-white text-gray-700"}`}
+        <button
+          onClick={() => setActiveTab("complaints")}
+          className={`px-4 py-2 border rounded ${activeTab === "complaints" ? "bg-indigo-600 text-white" : "bg-white text-gray-700"}`}
         >
-          Submit Blog
+          Register Complaint
         </button>
       </div>
 
       {activeTab === "profile" && (
         <div>
           <div className="flex flex-col items-center">
-            {/* For guides, if currentUser.avatar is empty, use a fallback */}
             <img
               src={currentUser?.avatar || "https://www.pngmart.com/files/23/Profile-PNG-Photo.png"}
               alt="Profile"
@@ -337,51 +360,118 @@ export default function Profile() {
         </div>
       )}
 
-      {activeTab === "blog" && (
+      {activeTab === "complaints" && (
         <div>
-          <h2 className="text-2xl font-bold mb-4 text-center">Submit a Blog Post</h2>
-          <form onSubmit={handleBlogSubmit} className="flex flex-col gap-4">
-            <input
-              type="text"
-              name="title"
-              placeholder="Title"
-              value={blogFormData.title}
-              onChange={handleBlogChange}
-              className="border p-3 rounded-lg"
-              required
-            />
-            <textarea
-              name="content"
-              placeholder="Content"
-              value={blogFormData.content}
-              onChange={handleBlogChange}
-              className="border p-3 rounded-lg"
-              required
-            ></textarea>
-            <textarea
-              name="review"
-              placeholder="Review (optional)"
-              value={blogFormData.review}
-              onChange={handleBlogChange}
-              className="border p-3 rounded-lg"
-            ></textarea>
-            <input
-              type="text"
-              name="images"
-              placeholder="Image URLs (comma separated)"
-              value={blogFormData.images}
-              onChange={handleBlogChange}
-              className="border p-3 rounded-lg"
-            />
+          <h2 className="text-2xl font-bold mb-4 text-center">Register Complaint</h2>
+          <form
+            onSubmit={handleComplaintSubmit}
+            className="max-w-md mx-auto mb-8 space-y-4 p-4 border rounded-lg shadow-md"
+          >
+            <div>
+              <label className="block text-gray-700 mb-1">Complaint Type</label>
+              <select
+                name="targetType"
+                value={complaintForm.targetType}
+                onChange={handleComplaintChange}
+                className="w-full border p-2 rounded"
+              >
+                <option value="Listing">Package</option>
+                <option value="Guide">Guide</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-gray-700 mb-1">
+                {complaintForm.targetType === "Listing" ? "Select Package" : "Guide ID"}
+              </label>
+              {complaintForm.targetType === "Listing" ? (
+                <select
+                  name="target"
+                  value={complaintForm.target}
+                  onChange={handleComplaintChange}
+                  className="w-full border p-2 rounded"
+                  required
+                >
+                  <option value="">Select a package</option>
+                  {bookings.length > 0 &&
+                    bookings.map((booking) =>
+                      booking.package && booking.package.title ? (
+                        <option key={booking._id} value={booking.package._id}>
+                          {booking.package.title}
+                        </option>
+                      ) : null
+                    )}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  name="target"
+                  placeholder="Enter Guide ID"
+                  value={complaintForm.target}
+                  onChange={handleComplaintChange}
+                  className="w-full border p-2 rounded"
+                  required
+                />
+              )}
+            </div>
+            <div>
+              <label className="block text-gray-700 mb-1">Complaint Message</label>
+              <textarea
+                name="message"
+                placeholder="Describe your issue"
+                value={complaintForm.message}
+                onChange={handleComplaintChange}
+                className="w-full border p-2 rounded"
+                required
+              ></textarea>
+            </div>
             <button
               type="submit"
-              disabled={blogLoading}
-              className="bg-blue-600 text-white py-3 rounded hover:bg-blue-700 transition duration-200 shadow-lg"
+              disabled={complaintLoading}
+              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition duration-200"
             >
-              {blogLoading ? "Submitting..." : "Submit Blog"}
+              {complaintLoading ? "Submitting..." : "Submit Complaint"}
             </button>
           </form>
-          {blogError && <p className="text-red-600 mt-4 text-center">{blogError}</p>}
+          {complaintError && (
+            <p className="text-center text-red-600 mb-4">{complaintError}</p>
+          )}
+          {/* Optionally, list existing complaints */}
+          {complaints.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white shadow-md rounded-lg">
+                <thead className="bg-gray-200">
+                  <tr>
+                    <th className="px-4 py-2 border">Complaint ID</th>
+                    <th className="px-4 py-2 border">Type</th>
+                    <th className="px-4 py-2 border">Target</th>
+                    <th className="px-4 py-2 border">Message</th>
+                    <th className="px-4 py-2 border">Status</th>
+                    <th className="px-4 py-2 border">Submitted At</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {complaints.map((complaint) => (
+                    <tr key={complaint._id} className="hover:bg-gray-100">
+                      <td className="px-4 py-2 border text-sm">{complaint._id}</td>
+                      <td className="px-4 py-2 border text-sm">
+                        {complaint.targetType === "Listing" ? "Package" : "Guide"}
+                      </td>
+                      <td className="px-4 py-2 border text-sm">
+                        {complaint.target && complaint.target.title
+                          ? complaint.target.title
+                          : complaint.target}
+                      </td>
+                      <td className="px-4 py-2 border text-sm">{complaint.message}</td>
+                      <td className="px-4 py-2 border text-sm capitalize">{complaint.status}</td>
+                      <td className="px-4 py-2 border text-sm">
+                        {new Date(complaint.createdAt).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 

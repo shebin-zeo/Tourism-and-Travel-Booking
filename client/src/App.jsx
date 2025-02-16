@@ -1,3 +1,4 @@
+// src/App.jsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import About from "./pages/About";
@@ -13,7 +14,7 @@ import CreatePackage from "./pages/CreatePackage";
 import ManagePackages from "./pages/ManagePackages";
 import BookingPage from "./pages/BookPackage";
 
-// Booking related details
+// Booking related components
 import ManageBooking from "./pages/ManageBooking";
 import ManageUser from "./componets/ManageUser";
 import UserBookings from "./pages/UserBookings";
@@ -34,6 +35,10 @@ import GuidePrivateRoute from "./componets/GuidePrivateRoute";
 import AdminCreateGuide from "./pages/AdminCreateGuide";
 import GuideSignIn from "./pages/GuideSignIn";
 
+// Complaints components
+//import UserComplaints from "./pages/UserComplaints";
+import AdminComplaints from "./pages/AdminComplaints";
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -49,20 +54,21 @@ export default function App() {
         <Route path="/booking/:id" element={<BookingPage />} />
         <Route path="/blogs" element={<BlogList />} />
         <Route path="/blog/:id" element={<BlogDetail />} />
-        
+        {/*<Route path="/complaints" element={<UserComplaints />} />*/}
+
         {/* Private User Routes */}
         <Route element={<PrivateRoute />}>
           <Route path="/profile" element={<Profile />} />
           <Route path="/blog/submit" element={<BlogSubmit />} />
           <Route path="/my-bookings" element={<UserBookings />} />
         </Route>
-        
+
         {/* Guide Routes */}
         <Route path="/guide/signin" element={<GuideSignIn />} />
         <Route element={<GuidePrivateRoute />}>
           <Route path="/guide/dashboard" element={<GuideDashboard />} />
         </Route>
-        
+
         {/* Admin Routes */}
         <Route path="/admin/signin" element={<AdminSignIn />} />
         <Route element={<AdminPrivateRoute />}>
@@ -73,10 +79,18 @@ export default function App() {
           <Route path="/admin/manage-users" element={<ManageUser />} />
           <Route path="/admin/manage-blog" element={<ManageBlog />} />
           <Route path="/admin/create-guide" element={<AdminCreateGuide />} />
+          <Route path="/admin/manage-complaints" element={<AdminComplaints />} />
         </Route>
-        
+
         {/* Fallback Route */}
-        <Route path="*" element={<div className="container mx-auto p-8 text-center"><h2 className="text-3xl font-bold">404 Not Found</h2></div>} />
+        <Route
+          path="*"
+          element={
+            <div className="container mx-auto p-8 text-center">
+              <h2 className="text-3xl font-bold">404 Not Found</h2>
+            </div>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

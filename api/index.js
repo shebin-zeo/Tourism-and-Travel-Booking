@@ -9,6 +9,7 @@ import listingRouter from './routes/listing.routes.js';
 import bookingRoutes from './routes/booking.route.js';
 import blogRoutes from './routes/blog.routes.js';
 import guideRoutes from './routes/guide.routes.js';
+import complaintRoutes from './routes/complaint.route.js';
 
 dotenv.config();
 mongoose
@@ -38,6 +39,8 @@ app.use('/api/listing', listingRouter); //Package listing routes
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/guide', guideRoutes);
+//For complaints routes
+app.use('/api/complaints', complaintRoutes);
 
 
 app.use((err,req,res,next)=>{
