@@ -1,5 +1,7 @@
 // controllers/guide.controller.js
 import User from '../models/user.model.js';
+import { sendGuideAppointmentEmail } from '../utils/emailService.js';
+
 
 export const createGuide = async (req, res, next) => {
   try {
@@ -41,6 +43,20 @@ export const getAllGuides = async (req, res, next) => {
     // Query all users with role "guide" and return username, email, and avatar fields.
     const guides = await User.find({ role: 'guide' }).select('username email avatar');
     return res.status(200).json({ guides });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const sendAppointmentEmail = async (req, res, next) => {
+  try {
+    const { guide } = req.body;
+    if (!guide || !guide.email) {
+      return res.status(400).json({ message: 'Guide email is required' });
+    }
+    await sendGuideAppointmentEmail(guide);
+    return res.status(200).json({ success: true, message: 'Appointment email sent' });
   } catch (error) {
     next(error);
   }

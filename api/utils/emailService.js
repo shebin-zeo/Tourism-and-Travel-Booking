@@ -90,3 +90,49 @@ Thank you for booking with WanderSphere!`,
 
   return transporter.sendMail(mailOptions);
 };
+
+
+export const sendGuideAppointmentEmail = async (guide) => {
+  const mailOptions = {
+    from: process.env.EMAIL_FROM, // e.g., "WanderSphere <wandersphereindia@outlook.com>"
+    to: guide.email,
+    subject: 'Congratulations on Your Appointment as Guide!',
+    text: `Hello ${guide.username},
+
+Congratulations! You have been appointed as a guide with WanderSphere. We are excited to have you on board.
+
+If you have any questions, please contact our support team at support@wandersphere.com or call +1 (234) 567-890.
+
+Best regards,
+WanderSphere Team`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; padding: 0;">
+        <!-- Header -->
+        <div style="background-color: #4f46e5; padding: 20px; text-align: center; border-radius: 4px 4px 0 0;">
+          <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Congratulations!</h1>
+        </div>
+        <!-- Body -->
+        <div style="padding: 20px; color: #333333;">
+          <p style="font-size: 16px;">Hello ${guide.username},</p>
+          <p style="font-size: 16px;">We are pleased to announce that you have been appointed as a guide with <strong>WanderSphere</strong>. Your skills and passion for travel will provide our customers with exceptional experiences.</p>
+          <p style="font-size: 16px;">If you have any questions or need further assistance, please feel free to reach out:</p>
+          <div style="margin-top: 10px; padding: 10px; background-color: #f0f0f0; border-radius: 4px;">
+            <p style="margin: 0; font-size: 16px;">
+              <strong>Email:</strong> <a href="mailto:support@wandersphere.com" style="color: #4f46e5; text-decoration: none;">support@wandersphere.com</a>
+            </p>
+            <p style="margin: 0; font-size: 16px;">
+              <strong>Phone:</strong> <a href="tel:+1234567890" style="color: #4f46e5; text-decoration: none;">+1 (234) 567-890</a>
+            </p>
+          </div>
+          <p style="font-size: 16px; margin-top: 20px;">Welcome aboard and congratulations once again!</p>
+        </div>
+        <!-- Footer -->
+        <div style="background-color: #f7f7f7; padding: 15px; text-align: center; font-size: 14px; color: #777777; border-radius: 0 0 4px 4px;">
+          <p>&copy; ${new Date().getFullYear()} WanderSphere. All rights reserved.</p>
+        </div>
+      </div>
+    `,
+  };
+
+  return transporter.sendMail(mailOptions);
+};
