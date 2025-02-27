@@ -11,29 +11,50 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendBookingConfirmation = async (to, booking) => {
-  // Build a list of traveller names with a person icon (using Unicode 👤)
-  const travellersList = booking.travellers && booking.travellers.length > 0
-    ? booking.travellers
-        .map(
-          traveller =>
-            `<li style="margin-bottom: 5px;"><span style="font-size: 16px; margin-right: 8px;">👤</span>${traveller.name}</li>`
-        )
-        .join('')
-    : '<li>N/A</li>';
+  // Separate travellers into Adult (age > 5) and Child (age <= 5)
+  const adultTravellers = booking.travellers.filter(
+    (traveller) => Number(traveller.age) > 5
+  );
+  const childTravellers = booking.travellers.filter(
+    (traveller) => Number(traveller.age) <= 5
+  );
+
+  const adultTravellersList =
+    adultTravellers.length > 0
+      ? adultTravellers
+          .map(
+            (traveller) =>
+              `<li style="margin-bottom: 5px;"><span style="font-size: 16px; margin-right: 8px;">👤</span>${traveller.name}</li>`
+          )
+          .join("")
+      : "<li>N/A</li>";
+
+  const childTravellersList =
+    childTravellers.length > 0
+      ? childTravellers
+          .map(
+            (traveller) =>
+              `<li style="margin-bottom: 5px;"><span style="font-size: 16px; margin-right: 8px;">🧒</span>${traveller.name}</li>`
+          )
+          .join("")
+      : "<li>N/A</li>";
 
   const mailOptions = {
     from: process.env.EMAIL_FROM, // e.g., "WanderSphere <yourgmail@gmail.com>"
     to, // Recipient's email
-    subject: 'Booking Confirmation',
+    subject: "Booking Confirmation",
     text: `Hello,
 
 Your booking (ID: ${booking._id}) for the package "${booking.package.title}" on ${new Date(
       booking.bookingDate
     ).toLocaleDateString()} has been successfully received.
 
-Travellers: ${booking.travellers.map(t => t.name).join(', ')}
+Adult Travellers: ${adultTravellers.map((t) => t.name).join(", ")}
+Child Travellers: ${childTravellers.map((t) => t.name).join(", ")}
 
-If you have any questions, please contact our support team at wandersphereindia@outlook.com or call +91 9567834271.
+Important: Please complete your payment within 7 days to confirm your booking.
+
+For any queries, contact us at wandersphereindia@outlook.com or call +91 9567834271.
 
 Thank you for booking with WanderSphere!`,
     html: `
@@ -43,9 +64,12 @@ Thank you for booking with WanderSphere!`,
           <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Booking Confirmation</h1>
         </div>
         <!-- Body -->
-        <div style="padding: 20px; color: #333333;">
+        <div style="padding: 20px; color: #333;">
           <p style="font-size: 16px;">Hello,</p>
-          <p style="font-size: 16px;">Thank you for booking with <strong>WanderSphere</strong>! Your booking has been successfully received and is being processed. Below are your booking details:</p>
+          <p style="font-size: 16px;">
+            Thank you for booking with <strong>WanderSphere</strong>! Your booking has been successfully received and is being processed.
+            Below are your booking details:
+          </p>
           <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
             <tr>
               <td style="padding: 8px; border: 1px solid #e0e0e0;"><strong>Booking ID</strong></td>
@@ -57,18 +81,27 @@ Thank you for booking with WanderSphere!`,
             </tr>
             <tr>
               <td style="padding: 8px; border: 1px solid #e0e0e0;"><strong>Booking Date</strong></td>
-              <td style="padding: 8px; border: 1px solid #e0e0e0;">${new Date(booking.bookingDate).toLocaleDateString()}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; border: 1px solid #e0e0e0;"><strong>Number of Travellers</strong></td>
-              <td style="padding: 8px; border: 1px solid #e0e0e0;">${booking.travellers.length}</td>
+              <td style="padding: 8px; border: 1px solid #e0e0e0;">${new Date(
+                booking.bookingDate
+              ).toLocaleDateString()}</td>
             </tr>
           </table>
-          <h3 style="font-size: 18px; font-weight: bold; margin-top: 20px;">Traveller Names:</h3>
+          
+          <h3 style="font-size: 18px; font-weight: bold; margin-top: 20px;">Adult Travellers:</h3>
           <ul style="list-style: none; padding: 0;">
-            ${travellersList}
+            ${adultTravellersList}
           </ul>
-          <!-- Contact Support Section -->
+          
+          <h3 style="font-size: 18px; font-weight: bold; margin-top: 20px;">Child Travellers (Age 5 and below):</h3>
+          <ul style="list-style: none; padding: 0;">
+            ${childTravellersList}
+          </ul>
+          
+          <h3 style="font-size: 18px; font-weight: bold; margin-top: 20px;">Payment Reminder</h3>
+          <p style="background-color: #fff3cd; padding: 10px; border-radius: 4px; font-size: 16px; margin-top: 10px;">
+            ⚠️ Please complete your payment within <strong>7 days</strong> to confirm your booking.
+          </p>
+          
           <h3 style="font-size: 18px; font-weight: bold; margin-top: 20px;">Need Assistance?</h3>
           <div style="margin-top: 10px; padding: 10px; background-color: #f0f0f0; border-radius: 4px;">
             <p style="margin: 0; font-size: 16px;">
@@ -81,16 +114,24 @@ Thank you for booking with WanderSphere!`,
           <p style="font-size: 16px; margin-top: 20px;">Thank you for booking with <strong>WanderSphere</strong>!</p>
         </div>
         <!-- Footer -->
-        <div style="background-color: #f7f7f7; padding: 15px; text-align: center; font-size: 14px; color: #777777; border-radius: 0 0 4px 4px;">
+        <div style="background-color: #f7f7f7; padding: 15px; text-align: center; font-size: 14px; color: #777; border-radius: 0 0 4px 4px;">
           <p>&copy; ${new Date().getFullYear()} WanderSphere. All rights reserved.</p>
         </div>
       </div>
     `,
   };
 
-  return transporter.sendMail(mailOptions);
+  // Send the email with proper error handling.
+  return new Promise((resolve, reject) => {
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending confirmation email:", error);
+        return reject(error);
+      }
+      resolve(info);
+    });
+  });
 };
-
 
 export const sendGuideAppointmentEmail = async (guide) => {
   const mailOptions = {
