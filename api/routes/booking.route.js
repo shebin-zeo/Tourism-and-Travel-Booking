@@ -7,7 +7,9 @@ import {
   getMyBookings,
   getGuideBookings,
   assignGuideToBooking,
-  completeBooking
+  completeBooking,
+  payBooking,
+  getBooking,
 } from '../controllers/booking.controller.js';
 import { verifyToken } from '../utils/verifyUser.js';
 import { verifyAdmin } from '../utils/verifyAdmin.js';
@@ -28,5 +30,11 @@ router.put('/assign-guide/:bookingId', verifyToken, verifyAdmin, assignGuideToBo
 // Guide routes
 router.get('/guide', verifyGuide, getGuideBookings);
 router.put('/complete/:bookingId',  verifyGuide, completeBooking);
+
+// Single booking route (for PaymentPage, etc.)
+router.get("/:bookingId", verifyToken, getBooking);
+
+// Payment route to mark booking as paid
+router.post("/:bookingId/pay", verifyToken, payBooking);
 
 export default router;

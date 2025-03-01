@@ -1,5 +1,6 @@
 import Booking from '../models/booking.model.js';
 import { sendBookingConfirmation } from '../utils/emailService.js';
+import mongoose from 'mongoose';
 
 // GET all bookings (Admin only)
 export const getBookings = async (req, res, next) => {
@@ -166,3 +167,51 @@ export const assignGuideToBooking = async (req, res, next) => {
   }
 };
 
+
+// GET a single booking by ID (for PaymentPage)
+export const getBooking = async (req, res, next) => {
+  try {
+    const { bookingId } = req.params;
+    console.log("Received bookingId:", bookingId);
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      console.log("Invalid ObjectId format");
+      return res.status(400).json({ message: "Invalid Booking ID" });
+    }
+    const booking = await Booking.findById(bookingId)
+      .populate("package", "title regularPrice")
+      .populate("user", "username email")
+      .populate("guide", "username email");
+    if (!booking) {
+      console.log("Booking not found in database.");
+      return res.status(404).json({ message: "Booking not found" });
+    }
+    console.log("Booking found:", booking);
+    return res.status(200).json({ success: true, booking });
+  } catch (error) {
+    console.error("Error in getBooking:", error);
+    next(error);
+  }
+};
+
+// Payment endpoint: mark booking as paid and record transaction details
+export const payBooking = async (req, res, next) => {
+  try {
+    const { bookingId } = req.params;
+    const { transactionId, reference } = req.body;
+    console.log(`Marking booking ${bookingId} as paid. Transaction: ${transactionId}, Reference: ${reference}`);
+    const booking = await Booking.findByIdAndUpdate(
+      bookingId,
+      { paid: true, transactionId, reference },
+      { new: true }
+    )
+      .populate("package", "title regularPrice")
+      .populate("user", "username email")
+      .populate("guide", "username email");
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+    return res.status(200).json({ success: true, booking });
+  } catch (error) {
+    next(error);
+  }
+};

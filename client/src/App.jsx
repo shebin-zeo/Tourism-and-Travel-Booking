@@ -39,6 +39,9 @@ import GuideSignIn from "./pages/GuideSignIn";
 //import UserComplaints from "./pages/UserComplaints";
 import AdminComplaints from "./pages/AdminComplaints";
 
+// Payment
+import PaymentPage from "./pages/PaymentPage";
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -60,6 +63,7 @@ export default function App() {
         <Route element={<PrivateRoute />}>
           <Route path="/profile" element={<Profile />} />
           <Route path="/blog/submit" element={<BlogSubmit />} />
+          <Route path="/payment/:bookingId" element={<PaymentPage />} />
           <Route path="/my-bookings" element={<UserBookings />} />
         </Route>
 

@@ -46,6 +46,9 @@ const bookingSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    paid: { type: Boolean, default: false },             // New field for payment status
+    transactionId: { type: String },                      // New field for transaction ID
+    reference: { type: String },                          // New field for payment reference
   },
   { timestamps: true }
 );

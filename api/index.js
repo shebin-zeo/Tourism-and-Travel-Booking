@@ -42,6 +42,9 @@ app.use('/api/guide', guideRoutes);
 //For complaints routes
 app.use('/api/complaints', complaintRoutes);
 
+// Mount booking routes under /api/bookings
+app.use("/api/bookings", bookingRoutes);
+
 
 app.use((err,req,res,next)=>{
     const statusCode=err.statusCode||500;
