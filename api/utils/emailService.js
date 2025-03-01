@@ -1,5 +1,7 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import PDFDocument from 'pdfkit';
+import getStream from 'get-stream';
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
@@ -133,47 +135,104 @@ Thank you for booking with WanderSphere!`,
   });
 };
 
+//Sent email for guide appointment
 export const sendGuideAppointmentEmail = async (guide) => {
-  const mailOptions = {
-    from: process.env.EMAIL_FROM, // e.g., "WanderSphere <wandersphereindia@outlook.com>"
-    to: guide.email,
-    subject: 'Congratulations on Your Appointment as Guide!',
-    text: `Hello ${guide.username},
+  try {
+    // Generate the PDF document in memory using PDFKit
+    const doc = new PDFDocument({ margin: 50 });
+    // Accumulate the PDF data in an array
+    const buffers = [];
+    doc.on('data', buffers.push.bind(buffers));
+    
+    // When the PDF is finalized, get the Buffer and send the email
+    doc.on('end', async () => {
+      const pdfData = Buffer.concat(buffers);
 
-Congratulations! You have been appointed as a guide with WanderSphere. We are excited to have you on board.
+      const mailOptions = {
+        from: process.env.EMAIL_FROM,  // e.g., "WanderSphere <yourgmail@gmail.com>"
+        to: guide.email,
+        subject: 'Congratulations on Your Appointment as Guide!',
+        text: `Hello ${guide.username},
+
+Congratulations! You have been appointed as a guide with WanderSphere. Please find attached your appointment letter.
 
 If you have any questions, please contact our support team at support@wandersphere.com or call +1 (234) 567-890.
 
 Best regards,
 WanderSphere Team`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; padding: 0;">
-        <!-- Header -->
-        <div style="background-color: #4f46e5; padding: 20px; text-align: center; border-radius: 4px 4px 0 0;">
-          <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Congratulations!</h1>
-        </div>
-        <!-- Body -->
-        <div style="padding: 20px; color: #333333;">
-          <p style="font-size: 16px;">Hello ${guide.username},</p>
-          <p style="font-size: 16px;">We are pleased to announce that you have been appointed as a guide with <strong>WanderSphere</strong>. Your skills and passion for travel will provide our customers with exceptional experiences.</p>
-          <p style="font-size: 16px;">If you have any questions or need further assistance, please feel free to reach out:</p>
-          <div style="margin-top: 10px; padding: 10px; background-color: #f0f0f0; border-radius: 4px;">
-            <p style="margin: 0; font-size: 16px;">
-              <strong>Email:</strong> <a href="mailto:support@wandersphere.com" style="color: #4f46e5; text-decoration: none;">support@wandersphere.com</a>
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+            <h1 style="text-align: center; color: #4f46e5;">Congratulations, ${guide.username}!</h1>
+            <p>We are excited to announce your appointment as a guide with <strong>WanderSphere</strong>.</p>
+            <p>Please find your appointment letter attached in PDF format.</p>
+            <p>If you have any questions, contact us at 
+              <a href="mailto:support@wandersphere.com" style="color: #4f46e5; text-decoration: none;">support@wandersphere.com</a> 
+              or call <a href="tel:+1234567890" style="color: #4f46e5; text-decoration: none;">+1 (234) 567-890</a>.
             </p>
-            <p style="margin: 0; font-size: 16px;">
-              <strong>Phone:</strong> <a href="tel:+1234567890" style="color: #4f46e5; text-decoration: none;">+1 (234) 567-890</a>
-            </p>
+            <p>Best regards,<br/>WanderSphere Team</p>
           </div>
-          <p style="font-size: 16px; margin-top: 20px;">Welcome aboard and congratulations once again!</p>
-        </div>
-        <!-- Footer -->
-        <div style="background-color: #f7f7f7; padding: 15px; text-align: center; font-size: 14px; color: #777777; border-radius: 0 0 4px 4px;">
-          <p>&copy; ${new Date().getFullYear()} WanderSphere. All rights reserved.</p>
-        </div>
-      </div>
-    `,
-  };
+        `,
+        attachments: [
+          {
+            filename: "GuideAppointmentLetter.pdf",
+            content: pdfData,
+          },
+        ],
+      };
 
-  return transporter.sendMail(mailOptions);
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Error sending appointment email:", error);
+        } else {
+          console.log("Appointment email sent:", info.response);
+        }
+      });
+    });
+
+    // Build the PDF content
+    // Header
+    doc
+      .fillColor("#4f46e5")
+      .fontSize(20)
+      .text("Guide Appointment Letter", { align: "center" })
+      .moveDown();
+
+    // Body content
+    doc
+      .fontSize(12)
+      .fillColor("#000")
+      .text(`Hello ${guide.username},`)
+      .moveDown()
+      .text(
+        "Congratulations! We are delighted to inform you that you have been appointed as a guide with WanderSphere. Your skills and passion for travel have impressed us, and we believe you will provide our customers with exceptional experiences.",
+        { align: "justify" }
+      )
+      .moveDown()
+      .text("Appointment Details:", { underline: true })
+      .moveDown(0.5)
+      .text("Position: Guide")
+      .text(`Start Date: ${new Date().toLocaleDateString()}`)
+      .text("Reporting Manager: Jane Smith ")
+      .moveDown()
+      .text(
+        "If you have any questions, please feel free to reach out to our support team.",
+        { align: "justify" }
+      )
+      .moveDown()
+      .text("Best regards,")
+      .text("WanderSphere Team");
+
+    // Footer
+    doc
+      .moveDown(2)
+      .fontSize(10)
+      .fillColor("#777")
+      .text(`© ${new Date().getFullYear()} WanderSphere. All rights reserved.`, { align: "center" });
+
+    // Finalize PDF file
+    doc.end();
+  } catch (err) {
+    console.error("Error generating guide appointment PDF:", err);
+    throw err;
+  }
 };
