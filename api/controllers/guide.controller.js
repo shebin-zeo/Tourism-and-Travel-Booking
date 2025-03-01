@@ -1,7 +1,7 @@
 // controllers/guide.controller.js
 import User from '../models/user.model.js';
+import Booking from '../models/booking.model.js'; // Import Booking model to check active bookings
 import { sendGuideAppointmentEmail } from '../utils/emailService.js';
-
 
 export const createGuide = async (req, res, next) => {
   try {
@@ -26,7 +26,7 @@ export const createGuide = async (req, res, next) => {
       username,
       name,
       email,
-      password,      // The password will be hashed by your pre-save hook
+      password, // The password will be hashed by your pre-save hook
       avatar: guideAvatar,
       phone,
       role: 'guide',
@@ -40,14 +40,23 @@ export const createGuide = async (req, res, next) => {
 
 export const getAllGuides = async (req, res, next) => {
   try {
-    // Query all users with role "guide" and return username, email, and avatar fields.
+    // Get all guides with role 'guide'
     const guides = await User.find({ role: 'guide' }).select('username email avatar');
-    return res.status(200).json({ guides });
+    // Query active bookings to identify guides that are currently assigned
+    const activeBookings = await Booking.find({ completed: false, guide: { $ne: null } }).select('guide');
+    const assignedGuideIds = activeBookings.map(b => b.guide.toString());
+
+    // Map each guide to include an availability flag
+    const guidesWithAvailability = guides.map(guide => ({
+      ...guide.toObject(),
+      available: !assignedGuideIds.includes(guide._id.toString()),
+    }));
+
+    return res.status(200).json({ guides: guidesWithAvailability });
   } catch (error) {
     next(error);
   }
 };
-
 
 export const sendAppointmentEmail = async (req, res, next) => {
   try {

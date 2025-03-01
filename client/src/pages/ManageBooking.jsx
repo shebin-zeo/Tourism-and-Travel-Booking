@@ -3,7 +3,7 @@ import { FaEdit, FaTrash, FaTimes, FaCheck, FaUserPlus } from 'react-icons/fa';
 
 export default function AdminBookings() {
   const [bookings, setBookings] = useState([]);
-  const [availableGuides, setAvailableGuides] = useState([]); // List of guides
+  const [availableGuides, setAvailableGuides] = useState([]); // Guides with availability flag
   const [selectedGuideId, setSelectedGuideId] = useState(''); // Selected guide from dropdown
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -53,7 +53,7 @@ export default function AdminBookings() {
     fetchBookings();
   }, []);
 
-  // Fetch available guides when assign modal is opened
+  // Fetch available guides when the assign modal is opened
   useEffect(() => {
     async function fetchGuides() {
       try {
@@ -412,8 +412,8 @@ export default function AdminBookings() {
               <option value="">-- Select Guide --</option>
               {availableGuides && availableGuides.length > 0 ? (
                 availableGuides.map((guide) => (
-                  <option key={guide._id} value={guide._id}>
-                    {guide.username} ({guide.email})
+                  <option key={guide._id} value={guide._id} disabled={!guide.available}>
+                    {guide.username} ({guide.email}) {guide.available ? '' : ' - Busy'}
                   </option>
                 ))
               ) : (
