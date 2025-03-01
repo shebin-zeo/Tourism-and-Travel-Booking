@@ -41,6 +41,8 @@ import AdminComplaints from "./pages/AdminComplaints";
 
 // Payment
 import PaymentPage from "./pages/PaymentPage";
+// Payment Reports for Admin
+import PaymentReports from "./componets/PaymentReports";
 
 export default function App() {
   return (
@@ -84,6 +86,7 @@ export default function App() {
           <Route path="/admin/manage-blog" element={<ManageBlog />} />
           <Route path="/admin/create-guide" element={<AdminCreateGuide />} />
           <Route path="/admin/manage-complaints" element={<AdminComplaints />} />
+          <Route path="/admin/payment-reports" element={<PaymentReports />} />
         </Route>
 
         {/* Fallback Route */}

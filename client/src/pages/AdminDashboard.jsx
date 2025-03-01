@@ -1,6 +1,6 @@
 // src/pages/AdminDashboard.jsx
 import { Link } from "react-router-dom";
-import { FaMapMarkedAlt, FaBoxOpen, FaClipboardList, FaUsers, FaPlusCircle, FaUserPlus,FaNewspaper,FaExclamationTriangle } from "react-icons/fa";
+import { FaMapMarkedAlt, FaBoxOpen, FaClipboardList, FaUsers, FaPlusCircle, FaUserPlus,FaNewspaper,FaExclamationTriangle,FaFileInvoiceDollar } from "react-icons/fa";
 
 export default function AdminDashboard() {
   const adminOptions = [
@@ -12,6 +12,8 @@ export default function AdminDashboard() {
     { name: "Create Guide", icon: <FaUserPlus />, path: "/admin/create-guide" }, // New Option
     { name: "Blog Approvals", icon: <FaNewspaper />, path: "/admin/manage-blog" }, // New option for blog approvals
     { name: "Manage Complaints", icon: <FaExclamationTriangle />, path: "/admin/manage-complaints" },
+    
+    { name: "Payment Reports", icon: <FaFileInvoiceDollar />, path: "/admin/payment-reports" },
   
   ];
 

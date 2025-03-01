@@ -215,3 +215,16 @@ export const payBooking = async (req, res, next) => {
     next(error);
   }
 };
+// GET all paid bookings (Payment Reports)
+export const getPaymentReports = async (req, res, next) => {
+  try {
+    const payments = await Booking.find({ paid: true })
+      .populate("package", "title regularPrice")
+      .populate("user", "username email")
+      .populate("guide", "username email")
+      .sort({ bookingDate: -1 });
+    return res.status(200).json({ success: true, payments });
+  } catch (error) {
+    next(error);
+  }
+};
