@@ -24,6 +24,7 @@ export const getMyBookings = async (req, res, next) => {
     }
     const bookings = await Booking.find({ user: req.user.id })
       .populate('package', 'title')
+      .populate('guide', 'username email') // Populate guide details
       .sort({ createdAt: -1 });
     return res.status(200).json({ success: true, bookings });
   } catch (error) {

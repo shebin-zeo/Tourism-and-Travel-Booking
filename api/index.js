@@ -39,9 +39,12 @@ app.use('/api/listing', listingRouter); //Package listing routes
 // Mount the booking routes
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/blog', blogRoutes);
+//For Admin get assign guide route
 app.use('/api/guide', guideRoutes);
 //For complaints routes
 app.use('/api/complaints', complaintRoutes);
+//User side guide complaints routes
+app.use('/api/guides', guideRoutes);
 
 // Mount booking routes under /api/bookings
 app.use("/api/bookings", bookingRoutes);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   updateUserStart,
@@ -13,6 +13,15 @@ import {
 } from "../redux/user/userSlice";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { motion } from "framer-motion";
+import {
+  FaTicketAlt,
+  FaBoxOpen,
+  FaUserAlt,
+  FaExclamationTriangle,
+  FaSignOutAlt,
+  FaTrashAlt,
+} from "react-icons/fa";
 
 export default function Profile() {
   const { currentUser, loading, error } = useSelector((state) => state.user);
@@ -47,6 +56,12 @@ export default function Profile() {
   // State for showing delete account confirmation modal.
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  // Animate profile photo on load.
+  const profilePhotoVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: { opacity: 1, scale: 1 },
+  };
+
   // Initialize profile form when currentUser changes.
   useEffect(() => {
     if (currentUser) {
@@ -68,7 +83,7 @@ export default function Profile() {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": token ? `Bearer ${token}` : "",
+              Authorization: token ? `Bearer ${token}` : "",
             },
             credentials: "include",
           });
@@ -98,7 +113,7 @@ export default function Profile() {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": token ? `Bearer ${token}` : "",
+              Authorization: token ? `Bearer ${token}` : "",
             },
             credentials: "include",
           });
@@ -116,6 +131,20 @@ export default function Profile() {
     }
   }, [activeTab, currentUser]);
 
+  // For Guide complaints, derive guide options from the user's bookings.
+  const myGuideOptions = useMemo(() => {
+    // Filter bookings that have an assigned guide and deduplicate by guide._id
+    return bookings
+      .filter((booking) => booking.guide)
+      .reduce((acc, booking) => {
+        const guide = booking.guide;
+        if (!acc.find((g) => g._id === guide._id)) {
+          acc.push(guide);
+        }
+        return acc;
+      }, []);
+  }, [bookings]);
+
   // Handle profile form changes.
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -131,7 +160,7 @@ export default function Profile() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : "",
+          Authorization: token ? `Bearer ${token}` : "",
         },
         body: JSON.stringify(formData),
       });
@@ -165,7 +194,7 @@ export default function Profile() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : "",
+          Authorization: token ? `Bearer ${token}` : "",
         },
         body: JSON.stringify(complaintForm),
         credentials: "include",
@@ -174,8 +203,7 @@ export default function Profile() {
       if (!res.ok) {
         throw new Error(data.message || "Complaint submission failed");
       }
-      toast.success("Complaint registered successfully!");
-      // Optionally update local complaint list.
+      toast.success("Complaint registered successfully!", { autoClose: 3000 });
       setComplaints((prev) => [data.complaint, ...prev]);
       setComplaintForm({ targetType: "Listing", target: "", message: "" });
     } catch (err) {
@@ -211,7 +239,7 @@ export default function Profile() {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : "",
+          Authorization: token ? `Bearer ${token}` : "",
         },
         credentials: "include",
       });
@@ -230,40 +258,62 @@ export default function Profile() {
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer position="bottom-right" autoClose={3000} />
       <h1 className="text-3xl font-bold text-center my-7">Profile</h1>
 
       {/* Tab Navigation */}
       <div className="flex justify-center gap-4 mb-6">
         <button
           onClick={() => setActiveTab("profile")}
-          className={`px-4 py-2 border rounded ${activeTab === "profile" ? "bg-indigo-600 text-white" : "bg-white text-gray-700"}`}
+          className={`px-4 py-2 border rounded ${
+            activeTab === "profile"
+              ? "bg-indigo-600 text-white"
+              : "bg-white text-gray-700"
+          }`}
         >
           My Profile
         </button>
         <button
           onClick={() => setActiveTab("bookings")}
-          className={`px-4 py-2 border rounded ${activeTab === "bookings" ? "bg-indigo-600 text-white" : "bg-white text-gray-700"}`}
+          className={`px-4 py-2 border rounded ${
+            activeTab === "bookings"
+              ? "bg-indigo-600 text-white"
+              : "bg-white text-gray-700"
+          }`}
         >
           My Bookings
         </button>
         <button
           onClick={() => setActiveTab("complaints")}
-          className={`px-4 py-2 border rounded ${activeTab === "complaints" ? "bg-indigo-600 text-white" : "bg-white text-gray-700"}`}
+          className={`px-4 py-2 border rounded ${
+            activeTab === "complaints"
+              ? "bg-indigo-600 text-white"
+              : "bg-white text-gray-700"
+          }`}
         >
           Register Complaint
         </button>
       </div>
 
+      {/* Profile Tab */}
       {activeTab === "profile" && (
         <div>
-          <div className="flex flex-col items-center">
+          <motion.div
+            variants={profilePhotoVariants}
+            initial="hidden"
+            animate="visible"
+            transition={{ duration: 0.5 }}
+            className="flex flex-col items-center"
+          >
             <img
-              src={currentUser?.avatar || "https://www.pngmart.com/files/23/Profile-PNG-Photo.png"}
+              src={
+                currentUser?.avatar ||
+                "https://www.pngmart.com/files/23/Profile-PNG-Photo.png"
+              }
               alt="Profile"
               className="rounded-full h-24 w-24 object-cover mb-4"
             />
-          </div>
+          </motion.div>
           <form onSubmit={handleProfileSubmit} className="flex flex-col gap-4">
             <input
               type="text"
@@ -297,14 +347,17 @@ export default function Profile() {
             </button>
           </form>
           <div className="flex justify-between mt-5">
-            <button onClick={handleSignOut} className="text-red-700 cursor-pointer">
-              Sign out
+            <button
+              onClick={handleSignOut}
+              className="flex items-center text-red-700 cursor-pointer"
+            >
+              <FaSignOutAlt className="mr-1" /> Sign out
             </button>
             <button
               onClick={() => setShowDeleteModal(true)}
-              className="text-red-700 cursor-pointer"
+              className="flex items-center text-red-700 cursor-pointer"
             >
-              Delete account
+              <FaTrashAlt className="mr-1" /> Delete account
             </button>
           </div>
           {error && <p className="text-red-700 mt-5">{error}</p>}
@@ -314,9 +367,12 @@ export default function Profile() {
         </div>
       )}
 
+      {/* Bookings Tab */}
       {activeTab === "bookings" && (
         <div>
-          <h2 className="text-2xl font-bold mb-4 text-center">My Booking History</h2>
+          <h2 className="text-2xl font-bold mb-4 text-center">
+            My Booking History
+          </h2>
           {bookingsLoading ? (
             <p className="text-center">Loading your bookings...</p>
           ) : bookingsError ? (
@@ -341,13 +397,15 @@ export default function Profile() {
                       <td className="px-4 py-2 border text-sm">{booking._id}</td>
                       <td className="px-4 py-2 border text-sm">
                         {booking.package && booking.package.title
-                          ? booking.package.title
+                          ? `${booking.package.title} (${new Date(booking.bookingDate).toLocaleDateString()})`
                           : "N/A"}
                       </td>
                       <td className="px-4 py-2 border text-sm">
                         {new Date(booking.bookingDate).toLocaleString()}
                       </td>
-                      <td className="px-4 py-2 border text-sm">{booking.travellers.length}</td>
+                      <td className="px-4 py-2 border text-sm">
+                        {booking.travellers.length}
+                      </td>
                       <td className="px-4 py-2 border text-sm">
                         {booking.approved ? "Success" : "Pending"}
                       </td>
@@ -360,35 +418,52 @@ export default function Profile() {
         </div>
       )}
 
+      {/* Complaints Tab */}
       {activeTab === "complaints" && (
-        <div>
-          <h2 className="text-2xl font-bold mb-4 text-center">Register Complaint</h2>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h2 className="text-2xl font-bold mb-4 text-center">
+            <FaTicketAlt className="inline-block mr-2" size={28} />
+            Raise a Complaint Ticket
+          </h2>
           <form
             onSubmit={handleComplaintSubmit}
-            className="max-w-md mx-auto mb-8 space-y-4 p-4 border rounded-lg shadow-md"
+            className="max-w-md mx-auto mb-8 space-y-4 p-4 border rounded-lg shadow-lg bg-white"
           >
-            <div>
+            {/* Complaint Type Field */}
+            <div className="relative">
               <label className="block text-gray-700 mb-1">Complaint Type</label>
               <select
                 name="targetType"
                 value={complaintForm.targetType}
                 onChange={handleComplaintChange}
-                className="w-full border p-2 rounded"
+                className="w-full border p-2 rounded pl-10"
               >
                 <option value="Listing">Package</option>
                 <option value="Guide">Guide</option>
               </select>
+              {complaintForm.targetType === "Listing" ? (
+                <FaBoxOpen className="absolute left-2 top-10 text-gray-400" />
+              ) : (
+                <FaUserAlt className="absolute left-2 top-10 text-gray-400" />
+              )}
             </div>
-            <div>
+            {/* Target Selection Field */}
+            <div className="relative">
               <label className="block text-gray-700 mb-1">
-                {complaintForm.targetType === "Listing" ? "Select Package" : "Guide ID"}
+                {complaintForm.targetType === "Listing"
+                  ? "Select Package"
+                  : "Select Guide"}
               </label>
               {complaintForm.targetType === "Listing" ? (
                 <select
                   name="target"
                   value={complaintForm.target}
                   onChange={handleComplaintChange}
-                  className="w-full border p-2 rounded"
+                  className="w-full border p-2 rounded pl-10"
                   required
                 >
                   <option value="">Select a package</option>
@@ -396,25 +471,54 @@ export default function Profile() {
                     bookings.map((booking) =>
                       booking.package && booking.package.title ? (
                         <option key={booking._id} value={booking.package._id}>
-                          {booking.package.title}
+                          {booking.package.title} (
+                          {new Date(booking.bookingDate).toLocaleDateString()})
                         </option>
                       ) : null
                     )}
                 </select>
               ) : (
-                <input
-                  type="text"
-                  name="target"
-                  placeholder="Enter Guide ID"
-                  value={complaintForm.target}
-                  onChange={handleComplaintChange}
-                  className="w-full border p-2 rounded"
-                  required
-                />
+                // For Guide complaints, use derived guide options from bookings.
+                myGuideOptions.length > 0 ? (
+                  <select
+                    name="target"
+                    value={complaintForm.target}
+                    onChange={handleComplaintChange}
+                    className="w-full border p-2 rounded pl-10"
+                    required
+                  >
+                    <option value="">Select a guide</option>
+                    {myGuideOptions.map((guide) => (
+                      <option key={guide._id} value={guide._id}>
+                        {guide.name || guide.fullName || guide.username || "No Name"}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  // Fallback if no guide options are available.
+                  <input
+                    type="text"
+                    name="target"
+                    placeholder="Enter Guide ID"
+                    value={complaintForm.target}
+                    onChange={handleComplaintChange}
+                    className="w-full border p-2 rounded pl-10"
+                    required
+                  />
+                )
+              )}
+              {complaintForm.targetType === "Listing" ? (
+                <FaBoxOpen className="absolute left-2 top-10 text-gray-400" />
+              ) : (
+                <FaUserAlt className="absolute left-2 top-10 text-gray-400" />
               )}
             </div>
-            <div>
-              <label className="block text-gray-700 mb-1">Complaint Message</label>
+            {/* Complaint Message Field */}
+            <div className="relative">
+              <label className="block text-gray-700 mb-1">
+                <FaExclamationTriangle className="inline-block mr-1 text-red-500" />
+                Complaint Message
+              </label>
               <textarea
                 name="message"
                 placeholder="Describe your issue"
@@ -424,24 +528,25 @@ export default function Profile() {
                 required
               ></textarea>
             </div>
-            <button
+            <motion.button
               type="submit"
               disabled={complaintLoading}
+              whileHover={{ scale: 1.02 }}
               className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition duration-200"
             >
               {complaintLoading ? "Submitting..." : "Submit Complaint"}
-            </button>
+            </motion.button>
           </form>
           {complaintError && (
             <p className="text-center text-red-600 mb-4">{complaintError}</p>
           )}
-          {/* Optionally, list existing complaints */}
+          {/* Animated Ticket List */}
           {complaints.length > 0 && (
             <div className="overflow-x-auto">
               <table className="min-w-full bg-white shadow-md rounded-lg">
                 <thead className="bg-gray-200">
                   <tr>
-                    <th className="px-4 py-2 border">Complaint ID</th>
+                    <th className="px-4 py-2 border">Ticket ID</th>
                     <th className="px-4 py-2 border">Type</th>
                     <th className="px-4 py-2 border">Target</th>
                     <th className="px-4 py-2 border">Message</th>
@@ -451,28 +556,41 @@ export default function Profile() {
                 </thead>
                 <tbody>
                   {complaints.map((complaint) => (
-                    <tr key={complaint._id} className="hover:bg-gray-100">
+                    <motion.tr
+                      key={complaint._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                      whileHover={{ scale: 1.02 }}
+                      className="hover:bg-gray-100"
+                    >
                       <td className="px-4 py-2 border text-sm">{complaint._id}</td>
                       <td className="px-4 py-2 border text-sm">
                         {complaint.targetType === "Listing" ? "Package" : "Guide"}
                       </td>
                       <td className="px-4 py-2 border text-sm">
-                        {complaint.target && complaint.target.title
-                          ? complaint.target.title
-                          : complaint.target}
+                        {complaint.target
+                          ? (complaint.target.title ||
+                             complaint.target.name ||
+                             complaint.target.fullName ||
+                             complaint.target.username ||
+                             complaint.target)
+                          : "N/A"}
                       </td>
                       <td className="px-4 py-2 border text-sm">{complaint.message}</td>
-                      <td className="px-4 py-2 border text-sm capitalize">{complaint.status}</td>
+                      <td className="px-4 py-2 border text-sm capitalize">
+                        {complaint.status}
+                      </td>
                       <td className="px-4 py-2 border text-sm">
                         {new Date(complaint.createdAt).toLocaleString()}
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
-        </div>
+        </motion.div>
       )}
 
       {/* Delete Account Confirmation Modal */}
@@ -490,7 +608,7 @@ export default function Profile() {
                 onClick={handleDeleteUser}
                 className="w-full flex items-center justify-center bg-red-600 text-white py-2 rounded hover:bg-red-700 transition duration-200 shadow"
               >
-                Yes, Delete
+                <FaTrashAlt className="mr-1" /> Yes, Delete
               </button>
               <button
                 onClick={() => setShowDeleteModal(false)}
@@ -502,8 +620,6 @@ export default function Profile() {
           </div>
         </div>
       )}
-
-      <ToastContainer position="bottom-right" autoClose={3000} />
     </div>
   );
 }

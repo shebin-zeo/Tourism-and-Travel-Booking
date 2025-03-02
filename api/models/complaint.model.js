@@ -1,5 +1,5 @@
-// models/complaint.model.js
 import mongoose from 'mongoose';
+
 
 const complaintSchema = new mongoose.Schema(
   {
@@ -11,12 +11,17 @@ const complaintSchema = new mongoose.Schema(
     targetType: {
       type: String,
       required: true,
-      enum: ['Listing', 'Guide'], // 'Listing' for packages; 'Guide' for guides
+      enum: ['Listing', 'User'], // 'Listing' for packages; 'Guide' for guides
     },
     target: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      refPath: 'targetType', // Dynamically references either Listing or Guide
+      // Use a function to determine which model to use.
+      // If targetType is "Guide", return "User" (because guides are stored as users).
+      // Otherwise (for Listing), return the value of targetType.
+      ref: function () {
+        return this.targetType === 'Guide' ? 'User' : this.targetType;
+      },
     },
     message: {
       type: String,

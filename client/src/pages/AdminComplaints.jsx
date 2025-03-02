@@ -1,4 +1,3 @@
-// src/pages/AdminComplaints.jsx
 import { useState, useEffect } from "react";
 import { FaCheck, FaTrash, FaTimes } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
@@ -15,7 +14,6 @@ export default function AdminComplaints() {
     async function fetchComplaints() {
       try {
         const token = localStorage.getItem("access_token");
-        // Debug log: ensure token exists
         console.log("Admin token:", token);
         const res = await fetch("/api/complaints", {
           method: "GET",
@@ -34,7 +32,7 @@ export default function AdminComplaints() {
         setComplaints(data.complaints);
       } catch (err) {
         setError(err.message);
-        toast.error(err.message);
+        toast.error(err.message, { autoClose: 3000 });
       } finally {
         setLoading(false);
       }
@@ -45,6 +43,8 @@ export default function AdminComplaints() {
   // Mark complaint as resolved.
   const handleResolve = async (complaintId) => {
     try {
+      // Dismiss any previous toasts
+      toast.dismiss();
       const token = localStorage.getItem("access_token");
       const res = await fetch(`/api/complaints/${complaintId}`, {
         method: "PUT",
@@ -59,19 +59,20 @@ export default function AdminComplaints() {
       if (!res.ok) {
         throw new Error(data.message || "Failed to update complaint status");
       }
-      toast.success("Complaint marked as resolved");
+      toast.success("Complaint marked as resolved", { autoClose: 3000 });
       setComplaints((prev) =>
         prev.map((c) =>
           c._id === complaintId ? { ...c, status: "resolved" } : c
         )
       );
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.message, { autoClose: 3000 });
     }
   };
 
   // Open delete modal.
   const openDeleteModal = (complaintId) => {
+    toast.dismiss();
     setSelectedComplaint(complaintId);
     setShowDeleteModal(true);
   };
@@ -80,12 +81,14 @@ export default function AdminComplaints() {
   const closeDeleteModal = () => {
     setSelectedComplaint(null);
     setShowDeleteModal(false);
+    toast.dismiss();
   };
 
   // Delete complaint.
   const handleDelete = async () => {
     if (!selectedComplaint) return;
     try {
+      toast.dismiss();
       const token = localStorage.getItem("access_token");
       const res = await fetch(`/api/complaints/${selectedComplaint}`, {
         method: "DELETE",
@@ -99,12 +102,12 @@ export default function AdminComplaints() {
       if (!res.ok) {
         throw new Error(data.message || "Failed to delete complaint");
       }
-      toast.success("Complaint deleted successfully");
+      toast.success("Complaint deleted successfully", { autoClose: 3000 });
       setComplaints((prev) =>
         prev.filter((c) => c._id !== selectedComplaint)
       );
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.message, { autoClose: 3000 });
     } finally {
       closeDeleteModal();
     }
@@ -126,7 +129,8 @@ export default function AdminComplaints() {
   }
   return (
     <main className="container mx-auto p-4">
-      <ToastContainer position="bottom-right" autoClose={3000} />
+      {/* Single ToastContainer placed once at the top */}
+      <ToastContainer position="bottom-right" autoClose={10000} />
       <h1 className="text-3xl font-bold text-center mb-6">Manage Complaints</h1>
       {complaints.length === 0 ? (
         <p className="text-center">No complaints found.</p>
@@ -152,12 +156,18 @@ export default function AdminComplaints() {
                     {complaint.targetType === "Listing" ? "Package" : "Guide"}
                   </td>
                   <td className="px-4 py-2 border text-sm">
-                    {complaint.target && complaint.target.title
-                      ? complaint.target.title
-                      : complaint.target}
+                    {complaint.target
+                      ? (complaint.target.title ||
+                         complaint.target.name ||
+                         complaint.target.fullName ||
+                         complaint.target.username ||
+                         complaint.target)
+                      : "N/A"}
                   </td>
                   <td className="px-4 py-2 border text-sm">{complaint.message}</td>
-                  <td className="px-4 py-2 border text-sm capitalize">{complaint.status}</td>
+                  <td className="px-4 py-2 border text-sm capitalize">
+                    {complaint.status}
+                  </td>
                   <td className="px-4 py-2 border text-sm">
                     {new Date(complaint.createdAt).toLocaleString()}
                   </td>
@@ -212,8 +222,6 @@ export default function AdminComplaints() {
           </div>
         </div>
       )}
-
-      <ToastContainer position="bottom-right" autoClose={3000} />
     </main>
   );
 }

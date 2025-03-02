@@ -70,3 +70,13 @@ export const sendAppointmentEmail = async (req, res, next) => {
     next(error);
   }
 };
+// GET /api/guides - Public endpoint to fetch guides (for complaint form)
+export const getGuides = async (req, res, next) => {
+  try {
+    // Fetch all users with role "guide"
+    const guides = await User.find({ role: 'guide' }).select('username name email avatar');
+    return res.status(200).json({ guides });
+  } catch (error) {
+    next(error);
+  }
+};

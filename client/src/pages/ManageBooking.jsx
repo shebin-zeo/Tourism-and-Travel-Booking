@@ -1,24 +1,26 @@
-import { useEffect, useState } from 'react';
-import { FaEdit, FaTrash, FaTimes, FaCheck, FaUserPlus } from 'react-icons/fa';
+import { useState, useEffect } from "react";
+import { FaEdit, FaTrash, FaTimes, FaCheck, FaUserPlus } from "react-icons/fa";
+import {  ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AdminBookings() {
   const [bookings, setBookings] = useState([]);
   const [availableGuides, setAvailableGuides] = useState([]); // Guides with availability flag
-  const [selectedGuideId, setSelectedGuideId] = useState(''); // Selected guide from dropdown
+  const [selectedGuideId, setSelectedGuideId] = useState(""); // Selected guide from dropdown
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [expandedBookingId, setExpandedBookingId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [bookingToDelete, setBookingToDelete] = useState(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [bookingToAssign, setBookingToAssign] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [notification, setNotification] = useState({ message: '', type: '', visible: false });
+  const [notification, setNotification] = useState({ message: "", type: "", visible: false });
 
   const showNotification = (message, type) => {
     setNotification({ message, type, visible: true });
     setTimeout(() => {
-      setNotification({ message: '', type: '', visible: false });
+      setNotification({ message: "", type: "", visible: false });
     }, 3000);
   };
 
@@ -26,22 +28,22 @@ export default function AdminBookings() {
   useEffect(() => {
     async function fetchBookings() {
       try {
-        const token = localStorage.getItem('access_token');
-        const res = await fetch('/api/bookings', {
-          method: 'GET',
+        const token = localStorage.getItem("access_token");
+        const res = await fetch("/api/bookings", {
+          method: "GET",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token ? `Bearer ${token}` : '',
+            "Content-Type": "application/json",
+            "Authorization": token ? `Bearer ${token}` : "",
           },
           credentials: "include",
         });
-        const contentType = res.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error('Server did not return JSON. Please check the backend.');
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("Server did not return JSON. Please check the backend.");
         }
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data.message || 'Failed to fetch bookings');
+          throw new Error(data.message || "Failed to fetch bookings");
         }
         setBookings(data.bookings);
       } catch (err) {
@@ -57,21 +59,21 @@ export default function AdminBookings() {
   useEffect(() => {
     async function fetchGuides() {
       try {
-        const token = localStorage.getItem('access_token');
-        const res = await fetch('/api/guide/all', {
-          method: 'GET',
+        const token = localStorage.getItem("access_token");
+        const res = await fetch("/api/guide/all", {
+          method: "GET",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token ? `Bearer ${token}` : '',
+            "Content-Type": "application/json",
+            "Authorization": token ? `Bearer ${token}` : "",
           },
         });
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data.message || 'Failed to fetch guides');
+          throw new Error(data.message || "Failed to fetch guides");
         }
         setAvailableGuides(data.guides);
       } catch (err) {
-        showNotification(err.message, 'error');
+        showNotification(err.message, "error");
       }
     }
     if (isAssignModalOpen) {
@@ -85,27 +87,27 @@ export default function AdminBookings() {
 
   const handleApprove = async (bookingId) => {
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem("access_token");
       const res = await fetch(`/api/bookings/approve/${bookingId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : '',
+          "Content-Type": "application/json",
+          "Authorization": token ? `Bearer ${token}` : "",
         },
         credentials: "include",
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || 'Failed to approve booking');
+        throw new Error(data.message || "Failed to approve booking");
       }
-      showNotification('Booking approved successfully!', 'success');
+      showNotification("Booking approved successfully!", "success");
       setBookings((prev) =>
         prev.map((b) =>
           b._id === bookingId ? { ...b, approved: true } : b
         )
       );
     } catch (err) {
-      showNotification(err.message, 'error');
+      showNotification(err.message, "error");
     }
   };
 
@@ -123,27 +125,27 @@ export default function AdminBookings() {
     if (!bookingToDelete) return;
     try {
       setDeleteLoading(true);
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem("access_token");
       const res = await fetch(`/api/bookings/${bookingToDelete}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : '',
+          "Content-Type": "application/json",
+          "Authorization": token ? `Bearer ${token}` : "",
         },
         credentials: "include",
       });
-      const contentType = res.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Server did not return JSON on deletion.');
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server did not return JSON on deletion.");
       }
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || 'Failed to delete booking');
+        throw new Error(data.message || "Failed to delete booking");
       }
-      setBookings(prev => prev.filter(b => b._id !== bookingToDelete));
-      showNotification('Booking deleted successfully!', 'success');
+      setBookings((prev) => prev.filter((b) => b._id !== bookingToDelete));
+      showNotification("Booking deleted successfully!", "success");
     } catch (err) {
-      showNotification(err.message, 'error');
+      showNotification(err.message, "error");
     } finally {
       setDeleteLoading(false);
       closeDeleteModal();
@@ -158,7 +160,7 @@ export default function AdminBookings() {
 
   const closeAssignModal = () => {
     setBookingToAssign(null);
-    setSelectedGuideId('');
+    setSelectedGuideId("");
     setIsAssignModalOpen(false);
   };
 
@@ -168,28 +170,27 @@ export default function AdminBookings() {
       return;
     }
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem("access_token");
       const res = await fetch(`/api/bookings/assign-guide/${bookingToAssign}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : '',
+          "Content-Type": "application/json",
+          "Authorization": token ? `Bearer ${token}` : "",
         },
         body: JSON.stringify({ guide: selectedGuideId }),
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || 'Failed to assign guide');
+        throw new Error(data.message || "Failed to assign guide");
       }
-      showNotification('Guide assigned successfully!', 'success');
-      // Update the booking with the assigned guide; assumes data.booking contains updated booking
-      setBookings(prev =>
-        prev.map(b =>
+      showNotification("Guide assigned successfully!", "success");
+      setBookings((prev) =>
+        prev.map((b) =>
           b._id === bookingToAssign ? { ...b, guide: data.booking.guide } : b
         )
       );
     } catch (err) {
-      showNotification(err.message, 'error');
+      showNotification(err.message, "error");
     } finally {
       closeAssignModal();
     }
@@ -235,7 +236,8 @@ export default function AdminBookings() {
                       : "N/A"}
                   </td>
                   <td className="px-4 py-2 border text-sm">
-                    {booking.user && (booking.user.username || booking.user.email)
+                    {booking.user &&
+                    (booking.user.username || booking.user.email)
                       ? booking.user.username || booking.user.email
                       : "N/A"}
                   </td>
@@ -286,8 +288,17 @@ export default function AdminBookings() {
                         <FaTrash className="mr-1" /> Delete
                       </button>
                       <button
-                        onClick={() => openAssignModal(booking._id)}
-                        className="flex items-center bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 transition duration-200"
+                        onClick={() => {
+                          if (!booking.completed) {
+                            openAssignModal(booking._id);
+                          }
+                        }}
+                        disabled={booking.completed}
+                        className={`flex items-center px-3 py-1 rounded transition duration-200 ${
+                          booking.completed
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-purple-600 text-white hover:bg-purple-700"
+                        }`}
                       >
                         <FaUserPlus className="mr-1" /> Assign Guide
                       </button>
@@ -303,8 +314,8 @@ export default function AdminBookings() {
       {expandedBookingId && (
         <div className="mt-6 bg-gray-50 p-6 rounded shadow-md">
           {bookings
-            .filter(b => b._id === expandedBookingId)
-            .map(booking => (
+            .filter((b) => b._id === expandedBookingId)
+            .map((booking) => (
               <div key={booking._id}>
                 <h2 className="text-2xl font-bold mb-4">Booking Details</h2>
                 <p>
@@ -312,11 +323,12 @@ export default function AdminBookings() {
                 </p>
                 <p>
                   <span className="font-semibold">Package:</span>{" "}
-                  {booking.package && booking.package.title ? booking.package.title : 'N/A'}
+                  {booking.package && booking.package.title ? booking.package.title : "N/A"}
                 </p>
                 <p>
                   <span className="font-semibold">User:</span>{" "}
-                  {booking.user && (booking.user.username || booking.user.email)
+                  {booking.user &&
+                  (booking.user.username || booking.user.email)
                     ? booking.user.username || booking.user.email
                     : "N/A"}
                 </p>
@@ -353,7 +365,7 @@ export default function AdminBookings() {
                         </a>
                       </p>
                       <p>
-                        <span className="font-semibold">Preferences:</span> {traveller.preferences || 'None'}
+                        <span className="font-semibold">Preferences:</span> {traveller.preferences || "None"}
                       </p>
                     </div>
                   ))
@@ -413,7 +425,7 @@ export default function AdminBookings() {
               {availableGuides && availableGuides.length > 0 ? (
                 availableGuides.map((guide) => (
                   <option key={guide._id} value={guide._id} disabled={!guide.available}>
-                    {guide.username} ({guide.email}) {guide.available ? '' : ' - Busy'}
+                    {guide.username} ({guide.email}) {guide.available ? "" : " - Busy"}
                   </option>
                 ))
               ) : (
@@ -446,6 +458,8 @@ export default function AdminBookings() {
           </p>
         </div>
       )}
+
+      <ToastContainer position="bottom-right" autoClose={3000} />
     </main>
   );
 }
