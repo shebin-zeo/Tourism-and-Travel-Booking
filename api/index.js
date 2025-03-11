@@ -11,6 +11,8 @@ import blogRoutes from './routes/blog.routes.js';
 import guideRoutes from './routes/guide.routes.js';
 import complaintRoutes from './routes/complaint.route.js';
 import paymentReportsRoutes from "./routes/paymentReports.route.js"; // New Payment Reports router
+import destinationRoutes from './routes/destination.routes.js'; //New for destionation
+import chatRoutes from './routes/chat.routes.js';
 
 dotenv.config();
 mongoose
@@ -50,6 +52,10 @@ app.use('/api/guides', guideRoutes);
 app.use("/api/bookings", bookingRoutes);
 // Mount the Payment Reports route separately at /api/PaymentReport
 app.use("/api/PaymentReport", paymentReportsRoutes);
+
+app.use('/api/chat', chatRoutes);
+//For destination routes
+app.use('/api/destinations', destinationRoutes);
 
 
 app.use((err,req,res,next)=>{
