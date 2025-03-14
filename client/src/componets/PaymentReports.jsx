@@ -1,4 +1,3 @@
-// client/src/pages/PaymentReports.jsx
 import { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable"; // Import autoTable explicitly
@@ -14,26 +13,26 @@ export default function PaymentReports() {
   // Define financial years (adjust as needed)
   const financialYears = ["2025-2026", "2024-2025", "2023-2024", "2022-2023", "2021-2022", "2020-2021"];
 
-  // Helper: compute total amount for a booking
+  // Helper: compute total amount for a booking (adjusted to use the same formula as cancellation)
   const computeTotalAmount = (booking) => {
     if (!booking.travellers || booking.travellers.length === 0) return 0;
     const price = booking.package?.regularPrice ? Number(booking.package.regularPrice) : 100;
-    return booking.travellers.reduce((total, traveller) => {
-      const age = Number(traveller.age);
-      if (age && age > 0) {
-        return total + (age <= 5 ? price / 2 : price);
-      }
-      return total;
-    }, 0);
+    return price * booking.travellers.length;
   };
 
-  // Overall total amount collected for filtered payments
-  const totalCollected = filteredPayments.reduce(
-    (sum, payment) => sum + computeTotalAmount(payment),
+  // Calculate overall totals:
+  const totalComputed = filteredPayments.reduce(
+    (sum, booking) => sum + computeTotalAmount(booking),
     0
   );
+  const totalRefund = filteredPayments
+    .filter((b) => b.cancelled)
+    .reduce((sum, b) => sum + (b.refundAmount || 0), 0);
+  const totalProfit = totalComputed - totalRefund;
+  const totalBookings = filteredPayments.length;
+  const totalCancelled = filteredPayments.filter((b) => b.cancelled).length;
 
-  // Fetch paid bookings from the dedicated PaymentReport endpoint
+  // Fetch paid bookings from the PaymentReport endpoint
   useEffect(() => {
     async function fetchBookings() {
       try {
@@ -97,26 +96,29 @@ export default function PaymentReports() {
       doc.setFontSize(16);
       doc.text(`Financial Report: ${selectedYear}`, 15, 40);
       doc.setFontSize(12);
-      const totalBookings = filteredPayments.length;
       doc.text(`Total Bookings: ${totalBookings}`, 15, 50);
-      doc.text(`Total Amount Collected: $${totalCollected.toFixed(2)}`, 15, 58);
+      doc.text(`Cancelled Bookings: ${totalCancelled}`, 15, 58);
+      doc.text(`Total Computed Amount: $${totalComputed.toFixed(2)}`, 15, 66);
+      doc.text(`Total Refund Amount: $${totalRefund.toFixed(2)}`, 15, 74);
+      doc.text(`Profit: $${totalProfit.toFixed(2)}`, 15, 82);
 
       // Prepare table data for autoTable
-      const tableColumn = ["Booking ID", "User", "Amount", "Transaction", "Date"];
+      const tableColumn = ["Booking ID", "User", "Amount", "Refund", "Transaction", "Date"];
       const tableRows = filteredPayments.map((payment) => {
         const amount = computeTotalAmount(payment);
         return [
           payment._id,
           payment.user?.username || payment.user?.email || "",
           `$${amount.toFixed(2)}`,
-          payment.transactionId || "",
+          payment.cancelled ? `$${(payment.refundAmount || 0).toFixed(2)}` : "N/A",
+          payment.transactionId || "N/A",
           new Date(payment.bookingDate).toLocaleDateString(),
         ];
       });
 
       // Use autoTable to generate the table
       autoTable(doc, {
-        startY: 65,
+        startY: 90,
         head: [tableColumn],
         body: tableRows,
         theme: "grid",
@@ -174,10 +176,19 @@ export default function PaymentReports() {
             </h2>
             <div className="mb-4">
               <p className="text-lg">
-                <strong>Total Bookings:</strong> {filteredPayments.length}
+                <strong>Total Bookings:</strong> {totalBookings}
               </p>
               <p className="text-lg">
-                <strong>Total Amount Collected:</strong> ${totalCollected.toFixed(2)}
+                <strong>Cancelled Bookings:</strong> {totalCancelled}
+              </p>
+              <p className="text-lg">
+                <strong>Total Computed Amount:</strong> ${totalComputed.toFixed(2)}
+              </p>
+              <p className="text-lg">
+                <strong>Total Refund Amount:</strong> ${totalRefund.toFixed(2)}
+              </p>
+              <p className="text-lg">
+                <strong>Profit:</strong> ${totalProfit.toFixed(2)}
               </p>
             </div>
             {filteredPayments.length === 0 ? (
@@ -191,6 +202,7 @@ export default function PaymentReports() {
                     <th className="py-2 px-4 border">Booking ID</th>
                     <th className="py-2 px-4 border">User</th>
                     <th className="py-2 px-4 border">Amount</th>
+                    <th className="py-2 px-4 border">Refund</th>
                     <th className="py-2 px-4 border">Transaction ID</th>
                     <th className="py-2 px-4 border">Date</th>
                   </tr>
@@ -205,7 +217,14 @@ export default function PaymentReports() {
                       <td className="py-2 px-4 border">
                         ${computeTotalAmount(payment).toFixed(2)}
                       </td>
-                      <td className="py-2 px-4 border">{payment.transactionId}</td>
+                      <td className="py-2 px-4 border">
+                        {payment.cancelled
+                          ? `$${(payment.refundAmount || 0).toFixed(2)}`
+                          : "N/A"}
+                      </td>
+                      <td className="py-2 px-4 border">
+                        {payment.transactionId || "N/A"}
+                      </td>
                       <td className="py-2 px-4 border">
                         {new Date(payment.bookingDate).toLocaleDateString()}
                       </td>

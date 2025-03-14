@@ -10,6 +10,7 @@ import {
   completeBooking,
   payBooking,
   getBooking,
+  cancelBooking
 } from '../controllers/booking.controller.js';
 import { verifyToken } from '../utils/verifyUser.js';
 import { verifyAdmin } from '../utils/verifyAdmin.js';
@@ -36,5 +37,8 @@ router.get("/:bookingId", verifyToken, getBooking);
 
 // Payment route to mark booking as paid
 router.post("/:bookingId/pay", verifyToken, payBooking);
+
+// User: Cancel booking (only the owner can cancel).
+router.put('/cancel/:id', verifyToken, cancelBooking);
 
 export default router;

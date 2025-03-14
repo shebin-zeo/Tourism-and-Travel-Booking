@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { FaEdit, FaTrash, FaTimes, FaCheck, FaUserPlus } from "react-icons/fa";
-import {  ToastContainer } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function AdminBookings() {
@@ -33,7 +33,7 @@ export default function AdminBookings() {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": token ? `Bearer ${token}` : "",
+            Authorization: token ? `Bearer ${token}` : "",
           },
           credentials: "include",
         });
@@ -64,7 +64,7 @@ export default function AdminBookings() {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": token ? `Bearer ${token}` : "",
+            Authorization: token ? `Bearer ${token}` : "",
           },
         });
         const data = await res.json();
@@ -92,7 +92,7 @@ export default function AdminBookings() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : "",
+          Authorization: token ? `Bearer ${token}` : "",
         },
         credentials: "include",
       });
@@ -102,9 +102,7 @@ export default function AdminBookings() {
       }
       showNotification("Booking approved successfully!", "success");
       setBookings((prev) =>
-        prev.map((b) =>
-          b._id === bookingId ? { ...b, approved: true } : b
-        )
+        prev.map((b) => (b._id === bookingId ? { ...b, approved: true } : b))
       );
     } catch (err) {
       showNotification(err.message, "error");
@@ -130,7 +128,7 @@ export default function AdminBookings() {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : "",
+          Authorization: token ? `Bearer ${token}` : "",
         },
         credentials: "include",
       });
@@ -175,7 +173,7 @@ export default function AdminBookings() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : "",
+          Authorization: token ? `Bearer ${token}` : "",
         },
         body: JSON.stringify({ guide: selectedGuideId }),
       });
@@ -208,7 +206,7 @@ export default function AdminBookings() {
       <h1 className="text-3xl font-bold mb-6 text-center text-indigo-600">
         Manage Bookings
       </h1>
-      
+
       {bookings.length === 0 ? (
         <p className="text-center">No bookings available.</p>
       ) : (
@@ -253,56 +251,63 @@ export default function AdminBookings() {
                   <td className="px-4 py-2 border text-sm">
                     {booking.completed ? (
                       <span className="text-green-600 font-bold">Trip Over</span>
+                    ) : booking.cancelled ? (
+                      <span className="text-gray-600 font-bold">Cancelled</span>
                     ) : (
                       <span className="text-red-600 font-bold">Active</span>
                     )}
                   </td>
                   <td className="px-4 py-2 border text-sm">
-                    <div className="flex space-x-2">
-                      {!booking.approved && (
-                        <button
-                          onClick={() => handleApprove(booking._id)}
-                          className="flex items-center bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition duration-200"
-                        >
-                          <FaCheck className="mr-1" /> Approve
-                        </button>
-                      )}
-                      <button
-                        onClick={() => toggleExpanded(booking._id)}
-                        className="flex items-center bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition duration-200"
-                      >
-                        {expandedBookingId === booking._id ? (
-                          <>
-                            <FaTimes className="mr-1" /> Hide Details
-                          </>
-                        ) : (
-                          <>
-                            <FaEdit className="mr-1" /> View Details
-                          </>
+                    {/* If booking is cancelled, disable all actions */}
+                    {booking.cancelled ? (
+                      <span className="text-gray-600">No actions available</span>
+                    ) : (
+                      <div className="flex space-x-2">
+                        {!booking.approved && (
+                          <button
+                            onClick={() => handleApprove(booking._id)}
+                            className="flex items-center bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition duration-200"
+                          >
+                            <FaCheck className="mr-1" /> Approve
+                          </button>
                         )}
-                      </button>
-                      <button
-                        onClick={() => openDeleteModal(booking._id)}
-                        className="flex items-center bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition duration-200"
-                      >
-                        <FaTrash className="mr-1" /> Delete
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (!booking.completed) {
-                            openAssignModal(booking._id);
-                          }
-                        }}
-                        disabled={booking.completed}
-                        className={`flex items-center px-3 py-1 rounded transition duration-200 ${
-                          booking.completed
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-purple-600 text-white hover:bg-purple-700"
-                        }`}
-                      >
-                        <FaUserPlus className="mr-1" /> Assign Guide
-                      </button>
-                    </div>
+                        <button
+                          onClick={() => toggleExpanded(booking._id)}
+                          className="flex items-center bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition duration-200"
+                        >
+                          {expandedBookingId === booking._id ? (
+                            <>
+                              <FaTimes className="mr-1" /> Hide Details
+                            </>
+                          ) : (
+                            <>
+                              <FaEdit className="mr-1" /> View Details
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => openDeleteModal(booking._id)}
+                          className="flex items-center bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition duration-200"
+                        >
+                          <FaTrash className="mr-1" /> Delete
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (!booking.completed) {
+                              openAssignModal(booking._id);
+                            }
+                          }}
+                          disabled={booking.completed}
+                          className={`flex items-center px-3 py-1 rounded transition duration-200 ${
+                            booking.completed
+                              ? "bg-gray-400 cursor-not-allowed"
+                              : "bg-purple-600 text-white hover:bg-purple-700"
+                          }`}
+                        >
+                          <FaUserPlus className="mr-1" /> Assign Guide
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

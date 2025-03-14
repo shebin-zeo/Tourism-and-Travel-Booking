@@ -49,6 +49,11 @@ const bookingSchema = new mongoose.Schema(
     paid: { type: Boolean, default: false },             // New field for payment status
     transactionId: { type: String },                      // New field for transaction ID
     reference: { type: String },                          // New field for payment reference
+     // NEW cancellation fields:
+     cancelled: { type: Boolean, default: false },
+     cancelledAt: { type: Date },
+     penaltyPercentage: { type: Number, default: 0 },
+     refundAmount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

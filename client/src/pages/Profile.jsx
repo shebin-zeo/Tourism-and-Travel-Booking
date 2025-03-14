@@ -56,7 +56,11 @@ export default function Profile() {
   // State for showing delete account confirmation modal.
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Animate profile photo on load.
+  // State for cancellation confirmation modal.
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [bookingToCancel, setBookingToCancel] = useState(null);
+
+  // Animation variants for profile photo.
   const profilePhotoVariants = {
     hidden: { opacity: 0, scale: 0.8 },
     visible: { opacity: 1, scale: 1 },
@@ -133,12 +137,11 @@ export default function Profile() {
 
   // For Guide complaints, derive guide options from the user's bookings.
   const myGuideOptions = useMemo(() => {
-    // Filter bookings that have an assigned guide and deduplicate by guide._id
     return bookings
       .filter((booking) => booking.guide)
       .reduce((acc, booking) => {
         const guide = booking.guide;
-        if (!acc.find((g) => g._id === guide._id)) {
+        if (guide && !acc.find((g) => g._id === guide._id)) {
           acc.push(guide);
         }
         return acc;
@@ -204,7 +207,6 @@ export default function Profile() {
         throw new Error(data.message || "Complaint submission failed");
       }
       toast.success("Complaint registered successfully!", { autoClose: 3000 });
-      setComplaints((prev) => [data.complaint, ...prev]);
       setComplaintForm({ targetType: "Listing", target: "", message: "" });
     } catch (err) {
       setComplaintError(err.message);
@@ -255,6 +257,92 @@ export default function Profile() {
       toast.error(error.message);
     }
   };
+
+  // Open cancellation modal for a selected booking.
+  const openCancelModal = (booking) => {
+    setBookingToCancel(booking);
+    setShowCancelModal(true);
+  };
+
+  // Handle cancellation confirmation.
+  const handleConfirmCancel = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`/api/bookings/cancel/${bookingToCancel._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Cancellation failed");
+      }
+      // Update bookings state with cancellation details.
+      setBookings((prev) =>
+        prev.map((b) =>
+          b._id === bookingToCancel._id
+            ? {
+                ...b,
+                cancelled: true,
+                refundAmount: data.refund,
+                penaltyPercentage: data.penaltyPercentage,
+                transactionId: data.transactionId,
+                reference: data.reference,
+              }
+            : b
+        )
+      );
+      toast.success(
+        `Booking cancelled. Refund: $${data.refund} (Penalty: ${data.penaltyPercentage}%)`
+      );
+      setShowCancelModal(false);
+      setBookingToCancel(null);
+    } catch (err) {
+      toast.error(err.message);
+      setShowCancelModal(false);
+      setBookingToCancel(null);
+    }
+  };
+
+  // Professional cancellation modal with animation.
+  const CancelModal = () => (
+    <motion.div
+      initial={{ opacity: 0, y: -50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+    >
+      <div className="bg-white rounded-lg shadow-2xl max-w-sm mx-auto p-6">
+        <h2 className="text-xl font-bold mb-4 text-red-600">
+          Confirm Cancellation
+        </h2>
+        <p className="mb-6 text-gray-600">
+          Are you sure you want to cancel this booking? Note: If cancelled after
+          48 hours, you will receive no refund; if cancelled between 24 and 48 hours, a 20% fee applies.
+        </p>
+        <div className="flex space-x-4">
+          <button
+            onClick={handleConfirmCancel}
+            className="w-full flex items-center justify-center bg-red-600 text-white py-2 rounded hover:bg-red-700 transition duration-200 shadow"
+          >
+            Yes, Cancel Booking
+          </button>
+          <button
+            onClick={() => {
+              setShowCancelModal(false);
+              setBookingToCancel(null);
+            }}
+            className="w-full flex items-center justify-center bg-gray-600 text-white py-2 rounded hover:bg-gray-700 transition duration-200 shadow"
+          >
+            Keep Booking
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
@@ -387,8 +475,9 @@ export default function Profile() {
                     <th className="px-4 py-2 border">Booking ID</th>
                     <th className="px-4 py-2 border">Package</th>
                     <th className="px-4 py-2 border">Booking Date</th>
-                    <th className="px-4 py-2 border">No. of Travellers</th>
+                    <th className="px-4 py-2 border">Travellers</th>
                     <th className="px-4 py-2 border">Status</th>
+                    <th className="px-4 py-2 border">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -397,7 +486,9 @@ export default function Profile() {
                       <td className="px-4 py-2 border text-sm">{booking._id}</td>
                       <td className="px-4 py-2 border text-sm">
                         {booking.package && booking.package.title
-                          ? `${booking.package.title} (${new Date(booking.bookingDate).toLocaleDateString()})`
+                          ? `${booking.package.title} (${new Date(
+                              booking.bookingDate
+                            ).toLocaleDateString()})`
                           : "N/A"}
                       </td>
                       <td className="px-4 py-2 border text-sm">
@@ -407,7 +498,36 @@ export default function Profile() {
                         {booking.travellers.length}
                       </td>
                       <td className="px-4 py-2 border text-sm">
-                        {booking.approved ? "Success" : "Pending"}
+                        {booking.cancelled
+                          ? "Cancelled"
+                          : booking.approved
+                          ? "Approved"
+                          : "Pending"}
+                      </td>
+                      <td className="px-4 py-2 border text-sm">
+                        {booking.cancelled ? (
+                          booking.refundAmount ? (
+                            <button
+                              onClick={() =>
+                                (window.location.href = `/api/refund/invoice/${booking._id}?refund=${booking.refundAmount}&penaltyPercentage=${booking.penaltyPercentage}&transactionId=${booking.transactionId}&reference=${booking.reference}`)
+                              }
+                              className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition duration-200"
+                            >
+                              Download Invoice
+                            </button>
+                          ) : (
+                            "Cancelled"
+                          )
+                        ) : !booking.completed ? (
+                          <button
+                            onClick={() => openCancelModal(booking)}
+                            className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition duration-200"
+                          >
+                            Cancel Booking
+                          </button>
+                        ) : (
+                          "Completed"
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -478,7 +598,6 @@ export default function Profile() {
                     )}
                 </select>
               ) : (
-                // For Guide complaints, use derived guide options from bookings.
                 myGuideOptions.length > 0 ? (
                   <select
                     name="target"
@@ -495,7 +614,6 @@ export default function Profile() {
                     ))}
                   </select>
                 ) : (
-                  // Fallback if no guide options are available.
                   <input
                     type="text"
                     name="target"
@@ -540,7 +658,7 @@ export default function Profile() {
           {complaintError && (
             <p className="text-center text-red-600 mb-4">{complaintError}</p>
           )}
-          {/* Animated Ticket List */}
+          {/* Optionally, list existing complaints here */}
           {complaints.length > 0 && (
             <div className="overflow-x-auto">
               <table className="min-w-full bg-white shadow-md rounded-lg">
@@ -571,10 +689,10 @@ export default function Profile() {
                       <td className="px-4 py-2 border text-sm">
                         {complaint.target
                           ? (complaint.target.title ||
-                             complaint.target.name ||
-                             complaint.target.fullName ||
-                             complaint.target.username ||
-                             complaint.target)
+                              complaint.target.name ||
+                              complaint.target.fullName ||
+                              complaint.target.username ||
+                              complaint.target)
                           : "N/A"}
                       </td>
                       <td className="px-4 py-2 border text-sm">{complaint.message}</td>
@@ -620,6 +738,11 @@ export default function Profile() {
           </div>
         </div>
       )}
+
+      {/* Cancellation Confirmation Modal */}
+      {showCancelModal && <CancelModal />}
+
+      <ToastContainer position="bottom-right" autoClose={3000} />
     </div>
   );
 }

@@ -229,3 +229,56 @@ export const getPaymentReports = async (req, res, next) => {
     next(error);
   }
 };
+
+export const cancelBooking = async (req, res, next) => {
+  try {
+    const bookingId = req.params.id;
+    // Find the booking and populate package data (for price)
+    const booking = await Booking.findById(bookingId).populate("package", "regularPrice");
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+    // Ensure the booking belongs to the user making the request
+    if (booking.user.toString() !== req.user.id) {
+      return res.status(403).json({ message: "You are not authorized to cancel this booking." });
+    }
+    // Prevent cancellation if already cancelled or completed
+    if (booking.cancelled) {
+      return res.status(400).json({ message: "Booking is already cancelled." });
+    }
+    if (booking.completed) {
+      return res.status(400).json({ message: "Completed bookings cannot be cancelled." });
+    }
+
+    // Determine time since booking creation (in hours)
+    const hoursSinceBooking = (Date.now() - new Date(booking.createdAt).getTime()) / (1000 * 60 * 60);
+    let penaltyPercentage = 0;
+    if (hoursSinceBooking > 48) {
+      penaltyPercentage = 100; // Cancellation after 48 hours → 100% penalty (zero refund)
+    } else if (hoursSinceBooking > 24) {
+      penaltyPercentage = 20; // 20% penalty if cancellation after 24 hours
+    }
+    // Calculate total booking amount (assuming package price * number of travellers)
+    const packagePrice = booking.package ? Number(booking.package.regularPrice) : 0;
+    const totalAmount = packagePrice * booking.travellers.length;
+    const penaltyAmount = (penaltyPercentage / 100) * totalAmount;
+    const refundAmount = totalAmount - penaltyAmount;
+
+    // Update booking as cancelled and store refund details.
+    booking.cancelled = true;
+    booking.cancelledAt = new Date();
+    booking.penaltyPercentage = penaltyPercentage;
+    booking.refundAmount = refundAmount;
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Booking cancelled successfully.",
+      refund: refundAmount,
+      penalty: penaltyAmount,
+      penaltyPercentage,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
