@@ -4,7 +4,9 @@ import {
   getListings,
   getListing, // NEW controller for a single listing
   updateListing,
-  deleteListing
+  deleteListing,
+  toggleListingAvailability, // NEW controller to toggle listing availability
+
 } from '../controllers/listing.controller.js';
 import { verifyToken } from '../utils/verifyUser.js';
 
@@ -18,6 +20,7 @@ router.get('/:id', getListing);
 router.post('/create', verifyToken, createListing);
 router.put('/:id', verifyToken, updateListing);
 router.delete('/:id', verifyToken, deleteListing);
+router.put('/:id/toggle', toggleListingAvailability);
 
 export default router;
  

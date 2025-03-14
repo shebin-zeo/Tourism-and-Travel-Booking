@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -39,12 +38,18 @@ export default function Packages() {
       <h1 className="text-3xl font-bold mb-6 text-center">Available Travel Packages</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {packages.map((pkg) => (
-          <div key={pkg._id} className="bg-white shadow-md rounded-lg overflow-hidden">
+          <div key={pkg._id} className="bg-white shadow-md rounded-lg overflow-hidden relative">
             <img
               src={pkg.imageUrls[0]}
               alt={pkg.title}
               className="w-full h-48 object-cover"
             />
+            {!pkg.enabled && (
+              <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex flex-col items-center justify-center">
+                <p className="text-white text-xl font-semibold mb-2">Unavailable</p>
+                <p className="text-gray-300 text-sm">This package is currently not available.</p>
+              </div>
+            )}
             <div className="p-4">
               <h2 className="text-xl font-semibold">{pkg.title}</h2>
               <p className="text-gray-600 mt-2">{pkg.destination}</p>

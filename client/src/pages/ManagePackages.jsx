@@ -93,6 +93,42 @@ export default function AdminDashboard() {
     }
   };
 
+  // Toggle the package availability (enable/disable).
+  const handleToggleAvailability = async (listing) => {
+    try {
+      // Treat missing enabled as true (active)
+      const currentEnabled = typeof listing.enabled === 'boolean' ? listing.enabled : true;
+      const updatedEnabled = !currentEnabled;
+      const updatedListing = { ...listing, enabled: updatedEnabled };
+  
+      // Optimistically update UI
+      setListings((prev) =>
+        prev.map((l) => (l._id === listing._id ? updatedListing : l))
+      );
+  
+      const res = await fetch(`/api/listing/${listing._id}/toggle`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: updatedEnabled }),
+      });
+  
+      const data = await res.json();
+      if (!res.ok) {
+        // Revert update on error
+        setListings((prev) =>
+          prev.map((l) => (l._id === listing._id ? listing : l))
+        );
+        showNotification(data.message || 'Failed to update package availability', 'error');
+      } else {
+        showNotification(
+          `Package ${updatedEnabled ? 'enabled' : 'disabled'} successfully`,
+          'success'
+        );
+      }
+    } catch (err) {
+      showNotification('Error updating package availability: ' + err.message, 'error');
+    }
+  };
   // Open the update modal and pre-fill the form with the selected listing data.
   const openUpdateModal = (listing) => {
     setSelectedListing(listing);
@@ -169,6 +205,7 @@ export default function AdminDashboard() {
                 <th className="py-2 px-4 border-b">Price</th>
                 <th className="py-2 px-4 border-b">Duration</th>
                 <th className="py-2 px-4 border-b">Created At</th>
+                <th className="py-2 px-4 border-b">Status</th>
                 <th className="py-2 px-4 border-b">Actions</th>
               </tr>
             </thead>
@@ -183,6 +220,9 @@ export default function AdminDashboard() {
                   <td className="py-2 px-4 border-b">
                     {new Date(listing.createdAt).toLocaleDateString()}
                   </td>
+                  <td className="py-2 px-4 border-b">
+                    {listing.enabled ? 'Enabled' : 'Disabled'}
+                  </td>
                   <td className="py-2 px-4 border-b space-x-2">
                     <button
                       onClick={() => openUpdateModal(listing)}
@@ -195,6 +235,16 @@ export default function AdminDashboard() {
                       className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
                     >
                       Delete
+                    </button>
+                    <button
+                      onClick={() => handleToggleAvailability(listing)}
+                      className={`px-3 py-1 text-white rounded ${
+                        listing.enabled
+                          ? 'bg-yellow-600 hover:bg-yellow-700'
+                          : 'bg-green-600 hover:bg-green-700'
+                      }`}
+                    >
+                      {listing.enabled ? 'Disable' : 'Enable'}
                     </button>
                   </td>
                 </tr>

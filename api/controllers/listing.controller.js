@@ -61,3 +61,26 @@ export const deleteListing = async (req, res, next) => {
     next(error);
   }
 };
+
+// NEW: Toggle package availability (enable/disable)
+export const toggleListingAvailability = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    let { enabled } = req.body;
+    // Ensure enabled is a boolean even if it's passed as a string
+    if (typeof enabled === "string") {
+      enabled = enabled.toLowerCase() === "true";
+    }
+    const listing = await Listing.findByIdAndUpdate(
+      id,
+      { enabled: enabled },
+      { new: true }
+    );
+    if (!listing) {
+      return res.status(404).json({ success: false, message: 'Listing not found' });
+    }
+    return res.status(200).json({ success: true, listing });
+  } catch (error) {
+    next(error);
+  }
+};

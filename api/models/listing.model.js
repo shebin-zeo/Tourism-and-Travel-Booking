@@ -58,6 +58,12 @@ const listingSchema = new mongoose.Schema(
       type: String,
       required: false, // Optional: Reference to assigned guide
     },
+     // NEW: Field to indicate package availability
+     enabled: {
+      type: Boolean,
+      default: true,
+      required: true,
+    },
   },
   { timestamps: true }
 );

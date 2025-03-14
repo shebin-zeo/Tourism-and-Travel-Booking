@@ -105,9 +105,9 @@ export default function Home() {
             {packages.map((pkg) => (
               <div
                 key={pkg._id}
-                className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300"
+                className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 relative"
               >
-                {/* Package Image with Hover Overlay */}
+                {/* Package Image with Overlays */}
                 <div className="relative">
                   <img
                     src={
@@ -117,14 +117,26 @@ export default function Home() {
                     alt={pkg.title}
                     className="w-full h-64 object-cover"
                   />
-                  <div className="absolute inset-0 bg-black bg-opacity-30 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <Link
-                      to={`/package/${pkg._id}`}
-                      className="px-4 py-2 bg-yellow-500 text-white font-semibold rounded"
-                    >
-                      View Details
-                    </Link>
-                  </div>
+                  {/* Unavailable Overlay */}
+                  {!pkg.enabled && (
+                    <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex flex-col items-center justify-center">
+                      <p className="text-white text-xl font-semibold mb-2">Unavailable</p>
+                      <p className="text-gray-300 text-sm text-center px-2">
+                        This package is currently not available.
+                      </p>
+                    </div>
+                  )}
+                  {/* "View Details" button rendered only if package is enabled */}
+                  {pkg.enabled && (
+                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                      <Link
+                        to={`/package/${pkg._id}`}
+                        className="px-4 py-2 bg-yellow-500 text-white font-semibold rounded"
+                      >
+                        View Details
+                      </Link>
+                    </div>
+                  )}
                 </div>
                 {/* Package Information */}
                 <div className="p-6">
@@ -212,7 +224,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Newsletter Subscription Section */}  
+      {/* Newsletter Subscription Section */}
       <section className="py-12 bg-blue-600">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
