@@ -9,7 +9,18 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Subscription states
+  const [subscribeEmail, setSubscribeEmail] = useState("");
+  const [subscribeLoading, setSubscribeLoading] = useState(false);
+  // Popup state: { message: string, type: "success" | "error" }
+  const [popup, setPopup] = useState(null);
+
   useEffect(() => {
+    // Remove any query parameters from URL on mount.
+    if (window.location.search) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+    
     const fetchPackages = async () => {
       setLoading(true);
       try {
@@ -47,6 +58,35 @@ export default function Home() {
   // Map scroll progress to opacity and vertical motion for the subheadline and button
   const subOpacity = useTransform(scrollYProgress, [0.3, 0.6], [0, 1]);
   const subY = useTransform(scrollYProgress, [0.3, 0.6], [20, 0]);
+
+  // Subscription handler
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
+    setSubscribeLoading(true);
+    try {
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: subscribeEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Subscription failed");
+      }
+      // Show success popup and clear email input
+      setPopup({ message: "Thank you for subscribing!", type: "success" });
+      setSubscribeEmail("");
+    } catch (err) {
+      setPopup({ message: err.message, type: "error" });
+    } finally {
+      setSubscribeLoading(false);
+    }
+  };
+
+  // Function to close the popup
+  const closePopup = () => {
+    setPopup(null);
+  };
 
   return (
     <div className="bg-gray-50">
@@ -233,19 +273,22 @@ export default function Home() {
           <p className="text-white mb-6">
             Join our newsletter and stay updated with the latest travel offers and destinations.
           </p>
-          <form className="max-w-md mx-auto flex flex-col sm:flex-row gap-4">
+          <form onSubmit={handleSubscribe} className="max-w-md mx-auto flex flex-col sm:flex-row gap-4">
             <input
               type="email"
               name="email"
               placeholder="Enter your email"
+              value={subscribeEmail}
+              onChange={(e) => setSubscribeEmail(e.target.value)}
               className="w-full px-4 py-3 rounded-md focus:outline-none"
               required
             />
             <button
               type="submit"
+              disabled={subscribeLoading}
               className="bg-yellow-500 text-black font-semibold px-6 py-3 rounded-md hover:bg-yellow-400 transition duration-300"
             >
-              Subscribe
+              {subscribeLoading ? "Subscribing..." : "Subscribe"}
             </button>
           </form>
         </div>
@@ -253,6 +296,23 @@ export default function Home() {
 
       {/* ChatBot Component (integrated at the bottom) */}
       <ChatBot />
+
+      {/* Popup Modal for subscription result */}
+      {popup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center">
+            <p className={`text-lg ${popup.type === "success" ? "text-green-600" : "text-red-600"}`}>
+              {popup.message}
+            </p>
+            <button
+              onClick={closePopup}
+              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-300"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

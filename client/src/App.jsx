@@ -44,6 +44,16 @@ import PaymentPage from "./pages/PaymentPage";
 // Payment Reports for Admin
 import PaymentReports from "./componets/PaymentReports";
 
+
+// New Destination Management Page
+import ManageDestinations from "./pages/ManageDestinations";
+import DestinationsList from "./pages/DestinationsList";
+import DestinationDetail from "./pages/DestinationDetail";
+
+//Send News Letter
+import NewsLetter from "./pages/SendNewsletter"
+
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -60,6 +70,11 @@ export default function App() {
         <Route path="/blogs" element={<BlogList />} />
         <Route path="/blog/:id" element={<BlogDetail />} />
         {/*<Route path="/complaints" element={<UserComplaints />} />*/}
+
+         {/* Destinations */}
+         <Route path="/destinations" element={<DestinationsList />} />
+        <Route path="/destination/:id" element={<DestinationDetail />} />
+
 
         {/* Private User Routes */}
         <Route element={<PrivateRoute />}>
@@ -87,6 +102,8 @@ export default function App() {
           <Route path="/admin/create-guide" element={<AdminCreateGuide />} />
           <Route path="/admin/manage-complaints" element={<AdminComplaints />} />
           <Route path="/admin/payment-reports" element={<PaymentReports />} />
+          <Route path="/admin/manage-destinations" element={<ManageDestinations />} />
+          <Route path="/admin/send-newsletter" element={<NewsLetter />} />
         </Route>
 
         {/* Fallback Route */}

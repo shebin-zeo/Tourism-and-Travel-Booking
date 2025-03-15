@@ -1,6 +1,6 @@
 // src/pages/AdminDashboard.jsx
 import { Link } from "react-router-dom";
-import { FaMapMarkedAlt, FaBoxOpen, FaClipboardList, FaUsers, FaPlusCircle, FaUserPlus,FaNewspaper,FaExclamationTriangle,FaFileInvoiceDollar } from "react-icons/fa";
+import { FaMapMarkedAlt, FaBoxOpen, FaClipboardList, FaUsers, FaPlusCircle, FaUserPlus,FaNewspaper,FaExclamationTriangle,FaFileInvoiceDollar,FaEnvelope } from "react-icons/fa";
 
 export default function AdminDashboard() {
   const adminOptions = [
@@ -14,6 +14,7 @@ export default function AdminDashboard() {
     { name: "Manage Complaints", icon: <FaExclamationTriangle />, path: "/admin/manage-complaints" },
     
     { name: "Payment Reports", icon: <FaFileInvoiceDollar />, path: "/admin/payment-reports" },
+    { name: "Send Newsletter", icon: <FaEnvelope />, path: "/admin/send-newsletter" }, // New option for sending newsletters
   
   ];
 

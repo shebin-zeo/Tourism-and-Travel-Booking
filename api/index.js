@@ -16,6 +16,9 @@ import paymentReportsRoutes from "./routes/paymentReports.route.js"; // New Paym
 import destinationRoutes from './routes/destination.routes.js'; //New for destionation
 import chatRoutes from './routes/chat.routes.js';
 import invoiceRouter from "./routes/refund.routes.js"; // New invoice route
+import subscriptionRoutes from './routes/subscription.routes.js';
+import newsletterRoutes from './routes/newsletter.routes.js';
+import path from 'path';
 
 dotenv.config();
 mongoose
@@ -25,6 +28,7 @@ mongoose
     .catch(err => {
     console.log('Error: ', err.message);
     });
+    const __dirname = path.resolve();
 
 const app = express();
 app.use(express.json()); // The express.json() middleware is used to parse JSON bodies of requests. The middleware is used to parse the body of the incoming request and then populate the req.body property with the parsed data.
@@ -61,6 +65,16 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/destinations', destinationRoutes);
 //For refund routes
 app.use("/api/refund", invoiceRouter);
+//For subscription routes
+// Mount the subscription route under /api
+app.use('/api/subscribe', subscriptionRoutes);
+//For newsletter routes
+app.use('/api/newsletter', newsletterRoutes);   
+app.use(express.static(path.join(__dirname, '/client/dist')));
+ 
+ app.get('*', (req, res) => {
+   res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+ })
 
 
 app.use((err,req,res,next)=>{
