@@ -52,6 +52,15 @@ export default function Header() {
                   Blogs
                 </Link>
               </li>
+
+              {/* New Destinations link */}
+              <li>
+                <Link to="/destinations" className="text-white hover:text-yellow-300">
+                  Destinations
+                </Link>
+              </li>
+
+              {/* Optionally show "Mark Journey" only if logged in */}
               {currentUser && (
                 <li>
                   <Link to="/blog/submit" className="text-white hover:text-yellow-300">
@@ -59,6 +68,8 @@ export default function Header() {
                   </Link>
                 </li>
               )}
+
+              {/* Profile / Sign In */}
               <li>
                 <Link to="/profile" className="flex items-center">
                   {currentUser ? (
