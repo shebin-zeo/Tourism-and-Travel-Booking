@@ -51,6 +51,7 @@ export default function SignIn() {
           placeholder='email'
           className='border p-3 rounded-lg'
           id='email'
+          required
           onChange={handleChange}
         />
         <input
@@ -58,6 +59,7 @@ export default function SignIn() {
           placeholder='password'
           className='border p-3 rounded-lg'
           id='password'
+          required
           onChange={handleChange}
         />
 
