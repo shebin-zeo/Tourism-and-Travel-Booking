@@ -59,7 +59,7 @@ export default function Home() {
   const subOpacity = useTransform(scrollYProgress, [0.3, 0.6], [0, 1]);
   const subY = useTransform(scrollYProgress, [0.3, 0.6], [20, 0]);
 
-  // Subscription handler
+  // Newsletter subscription handler
   const handleSubscribe = async (e) => {
     e.preventDefault();
     setSubscribeLoading(true);
@@ -142,54 +142,79 @@ export default function Home() {
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {packages.map((pkg) => (
-              <div
-                key={pkg._id}
-                className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 relative"
-              >
-                {/* Package Image with Overlays */}
-                <div className="relative">
-                  <img
-                    src={
-                      pkg.imageUrls?.[0] ||
-                      "https://images.unsplash.com/photo-1503220317375-aaad61436b1b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80"
-                    }
-                    alt={pkg.title}
-                    className="w-full h-64 object-cover"
-                  />
-                  {/* Unavailable Overlay */}
-                  {!pkg.enabled && (
-                    <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex flex-col items-center justify-center">
-                      <p className="text-white text-xl font-semibold mb-2">Unavailable</p>
-                      <p className="text-gray-300 text-sm text-center px-2">
-                        This package is currently not available.
+            {packages.map((pkg) => {
+              // Determine if this package has an offer (discount)
+              const hasOffer =
+                pkg.discountPrice &&
+                Number(pkg.discountPrice) < Number(pkg.regularPrice);
+              return (
+                <div
+                  key={pkg._id}
+                  className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 relative"
+                >
+                  {/* OFFER Badge (displayed if a discount exists) */}
+                  {hasOffer && (
+                    <span className="absolute top-2 left-2 bg-red-600 text-white text-sm font-bold px-2 py-1 rounded z-10">
+                      OFFER
+                    </span>
+                  )}
+                  {/* Package Image with Overlays */}
+                  <div className="relative">
+                    <img
+                      src={
+                        pkg.imageUrls?.[0] ||
+                        "https://images.unsplash.com/photo-1503220317375-aaad61436b1b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80"
+                      }
+                      alt={pkg.title}
+                      className="w-full h-64 object-cover"
+                    />
+                    {/* Unavailable Overlay */}
+                    {!pkg.enabled && (
+                      <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex flex-col items-center justify-center">
+                        <p className="text-white text-xl font-semibold mb-2">
+                          Unavailable
+                        </p>
+                        <p className="text-gray-300 text-sm text-center px-2">
+                          This package is currently not available.
+                        </p>
+                      </div>
+                    )}
+                    {/* "View Details" button rendered only if package is enabled */}
+                    {pkg.enabled && (
+                      <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                        <Link
+                          to={`/package/${pkg._id}`}
+                          className="px-4 py-2 bg-yellow-500 text-white font-semibold rounded"
+                        >
+                          View Details
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                  {/* Package Information */}
+                  <div className="p-6">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                      {pkg.title}
+                    </h3>
+                    <p className="text-gray-600 mb-4">{pkg.destination}</p>
+                    {hasOffer ? (
+                      <p className="mt-2 text-xl font-bold">
+                        <span className="text-red-500 line-through mr-2">
+                          ${pkg.regularPrice}
+                        </span>
+                        <span className="text-green-600">
+                          ${pkg.discountPrice}
+                        </span>
                       </p>
-                    </div>
-                  )}
-                  {/* "View Details" button rendered only if package is enabled */}
-                  {pkg.enabled && (
-                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-                      <Link
-                        to={`/package/${pkg._id}`}
-                        className="px-4 py-2 bg-yellow-500 text-white font-semibold rounded"
-                      >
-                        View Details
-                      </Link>
-                    </div>
-                  )}
+                    ) : (
+                      <p className="mt-2 text-indigo-600 text-xl font-bold">
+                        ${pkg.regularPrice}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                {/* Package Information */}
-                <div className="p-6">
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                    {pkg.title}
-                  </h3>
-                  <p className="text-gray-600 mb-4">{pkg.destination}</p>
-                  <p className="text-green-600 text-xl font-bold">
-                    ${pkg.regularPrice}
-                  </p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -265,7 +290,10 @@ export default function Home() {
       </section>
 
       {/* Newsletter Subscription Section */}
-      <section className="py-12 bg-blue-600">
+      <section
+        className="py-12 bg-blue-600"
+        style={{ background: "linear-gradient(to right, #00b09b, #96c93d)" }}
+      >
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
             Subscribe for Exclusive Deals
