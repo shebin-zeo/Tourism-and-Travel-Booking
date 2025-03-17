@@ -1,12 +1,24 @@
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
-import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 export default function Header() {
   const { currentUser } = useSelector((state) => state.user);
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Define a default avatar URL
   const defaultAvatar = "https://www.pngmart.com/files/23/Profile-PNG-Photo.png";
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    // Only navigate if the query is not empty
+    if (searchQuery.trim()) {
+      // Redirect to the search results page with query as URL parameter
+      navigate(`/search?query=${encodeURIComponent(searchQuery)}`);
+    }
+  };
 
   return (
     <header className="bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg">
@@ -22,15 +34,17 @@ export default function Header() {
 
           {/* Search Bar */}
           <div className="flex-1 mx-4">
-            <form className="relative">
+            <form className="relative" onSubmit={handleSearchSubmit}>
               <input
                 type="search"
-                placeholder="Search destinations..."
+                placeholder="Search packages..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-300"
               />
-              <div className="absolute left-3 top-2 text-gray-400">
+              <button type="submit" className="absolute left-3 top-2 text-gray-400">
                 <FaSearch />
-              </div>
+              </button>
             </form>
           </div>
 
@@ -52,15 +66,13 @@ export default function Header() {
                   Blogs
                 </Link>
               </li>
-
-              {/* New Destinations link */}
+              {/* Destinations link */}
               <li>
                 <Link to="/destinations" className="text-white hover:text-yellow-300">
                   Destinations
                 </Link>
               </li>
-
-              {/* Optionally show "Mark Journey" only if logged in */}
+              {/* Show "Mark Journey" only if logged in */}
               {currentUser && (
                 <li>
                   <Link to="/blog/submit" className="text-white hover:text-yellow-300">
@@ -68,7 +80,6 @@ export default function Header() {
                   </Link>
                 </li>
               )}
-
               {/* Profile / Sign In */}
               <li>
                 <Link to="/profile" className="flex items-center">

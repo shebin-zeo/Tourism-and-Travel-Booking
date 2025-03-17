@@ -53,6 +53,9 @@ import DestinationDetail from "./pages/DestinationDetail";
 //Send News Letter
 import NewsLetter from "./pages/SendNewsletter"
 
+//Search Packages
+import SearchResults from "./componets/SearchResults";
+
 
 export default function App() {
   return (
@@ -74,6 +77,8 @@ export default function App() {
          {/* Destinations */}
          <Route path="/destinations" element={<DestinationsList />} />
         <Route path="/destination/:id" element={<DestinationDetail />} />
+
+        <Route path="/search" element={<SearchResults />} />
 
 
         {/* Private User Routes */}
