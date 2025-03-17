@@ -61,7 +61,7 @@ const emailTemplate = (content, bannerUrl) => `
     <div class="content">
       ${content}
       <div style="text-align: center;">
-        <a href="http://localhost:5173/packages" class="cta-button">Explore Deals Now</a>
+        <a href="https://wandersphere-c9wn.onrender.com/" class="cta-button">Explore Deals Now</a>
       </div>
     </div>
     <div class="footer">
