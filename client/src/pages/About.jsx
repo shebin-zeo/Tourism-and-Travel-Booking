@@ -48,7 +48,7 @@ export default function About() {
             {/* Team Member 1 */}
             <div className="text-center">
               <img
-                src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                src="https://res.cloudinary.com/drqoa7h5u/image/upload/v1742280622/WhatsApp_Image_2025-03-18_at_12.18.25_d3ea1324_rgtdcm.jpg"
                 alt="Team Member"
                 className="rounded-full w-32 h-32 mx-auto mb-4 shadow-lg"
               />
