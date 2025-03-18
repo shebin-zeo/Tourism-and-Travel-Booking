@@ -63,7 +63,7 @@ export default function About() {
                 alt="Team Member"
                 className="rounded-full w-32 h-32 mx-auto mb-4 shadow-lg"
               />
-              <h4 className="text-xl font-semibold text-gray-800 mb-2">Jane Smith</h4>
+              <h4 className="text-xl font-semibold text-gray-800 mb-2">Kane Williams</h4>
               <p className="text-gray-600">Travel Specialist</p>
             </div>
 
