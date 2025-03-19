@@ -69,7 +69,7 @@ export default function Header() {
               {/* Destinations link */}
               <li>
                 <Link to="/destinations" className="text-white hover:text-yellow-300">
-                  Destinations
+                  Editors Choice
                 </Link>
               </li>
               {/* Show "Mark Journey" only if logged in */}

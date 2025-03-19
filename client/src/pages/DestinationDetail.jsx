@@ -1,209 +1,129 @@
 // src/pages/DestinationDetail.jsx
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { toast } from "react-toastify";
+import PropTypes from "prop-types";
+
+// A simple ImageSlider component that cycles through images
+function ImageSlider({ images }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Automatically cycle images every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % images.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [images.length]);
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+  };
+
+  return (
+    <div className="relative w-full overflow-hidden rounded-lg shadow-lg">
+      <img
+        src={images[currentIndex]}
+        alt={`Slide ${currentIndex + 1}`}
+        className="w-full h-auto object-cover transition-all duration-500 ease-in-out"
+      />
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={handlePrev}
+            className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition"
+          >
+            Prev
+          </button>
+          <button
+            onClick={handleNext}
+            className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition"
+          >
+            Next
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+ImageSlider.propTypes = {
+  images: PropTypes.arrayOf(PropTypes.string).isRequired,
+};
 
 export default function DestinationDetail() {
   const { id } = useParams();
   const [destination, setDestination] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  // Booking states
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [requestGuide, setRequestGuide] = useState(false);
-
-  // Feedback states
-  const [feedbackList, setFeedbackList] = useState([]);
-  const [newComment, setNewComment] = useState("");
+  // State to toggle "Read More"
+  const [showFullDescription, setShowFullDescription] = useState(false);
 
   useEffect(() => {
-    async function fetchDestination() {
-      try {
-        const res = await fetch(`/api/destinations/${id}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.message || "Failed to fetch destination");
-        }
+    fetch(`/api/destinations/${id}`)
+      .then((res) => res.json())
+      .then((data) => {
         setDestination(data.destination);
-        // If the backend returns an array of feedback, store it
-        if (data.destination.feedback) {
-          setFeedbackList(data.destination.feedback);
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
         setLoading(false);
-      }
-    }
-    fetchDestination();
+      })
+      .catch(() => setLoading(false));
   }, [id]);
 
-  // Handle booking
-  const handleBooking = async () => {
-    if (!startDate || !endDate) {
-      toast.error("Please select your travel dates.");
-      return;
-    }
-    // Basic validation: endDate >= startDate, etc.
-    // Send request to create a booking
-    try {
-      const res = await fetch("/api/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          destinationId: id,
-          startDate,
-          endDate,
-          requestGuide, // true or false
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Booking failed.");
-      }
-      toast.success("Booking successful!");
-    } catch (err) {
-      toast.error(err.message);
-    }
-  };
+  if (loading)
+    return <p className="text-center p-8 text-xl">Loading...</p>;
+  if (!destination)
+    return <p className="text-center p-8 text-xl">Destination not found</p>;
 
-  // Handle adding new feedback
-  const handleAddFeedback = async () => {
-    if (!newComment) {
-      toast.error("Please enter your comment.");
-      return;
-    }
-    try {
-      const res = await fetch(`/api/destinations/${id}/feedback`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ comment: newComment }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to add feedback.");
-      }
-      toast.success("Feedback added!");
-      setFeedbackList((prev) => [data.feedback, ...prev]); // data.feedback = new feedback item
-      setNewComment("");
-    } catch (err) {
-      toast.error(err.message);
-    }
-  };
-
-  if (loading) {
-    return <div className="p-8 text-center">Loading destination...</div>;
-  }
-
-  if (error) {
-    return <div className="p-8 text-center text-red-600">Error: {error}</div>;
-  }
-
-  if (!destination) {
-    return <div className="p-8 text-center">Destination not found.</div>;
-  }
+  // Determine how many characters to show initially
+  const descriptionLimit = 300;
+  const isLongDescription =
+    destination.description && destination.description.length > descriptionLimit;
+  const displayedDescription = showFullDescription || !isLongDescription
+    ? destination.description
+    : destination.description.slice(0, descriptionLimit) + "...";
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-3xl font-bold text-indigo-600 mb-4">
+    <div className="max-w-5xl mx-auto p-6">
+      <h1 className="text-4xl font-bold mb-6 text-gray-800">
         {destination.name}
       </h1>
-
-      {/* Image Gallery */}
-      {destination.imageUrls && destination.imageUrls.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {destination.imageUrls.map((url, index) => (
-            <img
-              key={index}
-              src={url}
-              alt={destination.name}
-              className="w-full h-64 object-cover rounded shadow"
-            />
-          ))}
-        </div>
-      )}
-
-      <p className="text-gray-700 mb-6">{destination.description}</p>
-
-      {/* Booking Section */}
-      <div className="bg-gray-100 p-4 rounded mb-6">
-        <h2 className="text-xl font-semibold mb-2">Plan Your Trip</h2>
-        <div className="flex flex-col md:flex-row gap-4">
-          <div>
-            <label className="block text-gray-700">Start Date</label>
-            <input
-              type="date"
-              className="border p-2 rounded"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700">End Date</label>
-            <input
-              type="date"
-              className="border p-2 rounded"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-          </div>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              className="mr-2"
-              checked={requestGuide}
-              onChange={(e) => setRequestGuide(e.target.checked)}
-            />
-            <label>Request a Guide (optional)</label>
-          </div>
-        </div>
-        <button
-          onClick={handleBooking}
-          className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-        >
-          Book Now
-        </button>
-      </div>
-
-      {/* Feedback Section */}
-      <div className="bg-gray-100 p-4 rounded">
-        <h2 className="text-xl font-semibold mb-2">Feedback</h2>
-
-        {/* Existing feedback */}
-        {feedbackList.length === 0 ? (
-          <p className="text-gray-600 mb-4">No feedback yet.</p>
+      <div className="w-full max-w-3xl mx-auto">
+        {destination.videoUrl ? (
+          <video controls className="w-full rounded-lg shadow-lg">
+            <source src={destination.videoUrl} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
         ) : (
-          <ul className="space-y-4 mb-4">
-            {feedbackList.map((fb, idx) => (
-              <li key={idx} className="bg-white p-3 rounded shadow">
-                <p className="text-gray-700">{fb.comment}</p>
-                {/* If you store user info, you could show: "by {fb.user.username}" */}
-              </li>
-            ))}
-          </ul>
+          destination.imageUrls &&
+          destination.imageUrls.length > 0 &&
+          (destination.imageUrls.length > 1 ? (
+            <ImageSlider images={destination.imageUrls} />
+          ) : (
+            <img
+              src={destination.imageUrls[0]}
+              alt={destination.name}
+              className="w-full rounded-lg shadow-lg"
+            />
+          ))
         )}
-
-        {/* Add new feedback */}
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="Leave a comment..."
-            className="border p-2 rounded flex-1"
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-          />
+      </div>
+      <div className="mt-8">
+        <p
+          className="text-lg leading-relaxed whitespace-pre-line text-gray-700"
+          style={{ textAlign: "justify" }}
+        >
+          {displayedDescription}
+        </p>
+        {isLongDescription && (
           <button
-            onClick={handleAddFeedback}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+            onClick={() => setShowFullDescription((prev) => !prev)}
+            className="mt-2 text-blue-600 font-semibold hover:underline"
           >
-            Submit
+            {showFullDescription ? "Show Less" : "Read More"}
           </button>
-        </div>
+        )}
       </div>
     </div>
   );

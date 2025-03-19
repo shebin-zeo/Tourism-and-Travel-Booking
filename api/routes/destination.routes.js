@@ -6,13 +6,17 @@ import {
   getDestinationById,
   updateDestination,
   deleteDestination,
+  getEditorsChoiceDestinations,
 } from '../controllers/destination.controller.js';
 import { verifyToken } from '../utils/verifyUser.js';
 import { verifyAdmin } from '../utils/verifyAdmin.js';
 
 const router = express.Router();
 
-// Only admin can create, update, and delete destinations.
+// Editor's Choice endpoint (publicly accessible)
+router.get('/editor-choice', getEditorsChoiceDestinations);
+
+// Existing endpoints:
 router.post('/', verifyToken, verifyAdmin, createDestination);
 router.get('/', getAllDestinations);
 router.get('/:id', getDestinationById);

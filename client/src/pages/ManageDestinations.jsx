@@ -14,11 +14,12 @@ export default function ManageDestinations() {
   // If editing an existing destination, store that record here; otherwise null for "Add New"
   const [editingDestination, setEditingDestination] = useState(null);
 
-  // Form data for the modal (including images)
+  // Form data for the modal (including images and video URL)
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    imageUrls: [], // We'll store images in an array
+    imageUrls: [],
+    videoUrl: "",
   });
 
   // Cloudinary states
@@ -48,32 +49,32 @@ export default function ManageDestinations() {
     fetchDestinations();
   }, []);
 
-  // 2) Handle opening the modal for adding a new destination
+  // 2) Open modal for new destination
   const openModalForNew = () => {
     setEditingDestination(null);
-    // Reset form data
-    setFormData({ name: "", description: "", imageUrls: [] });
+    setFormData({ name: "", description: "", imageUrls: [], videoUrl: "" });
     setIsModalOpen(true);
   };
 
-  // 3) Handle opening the modal for editing an existing destination
+  // 3) Open modal for editing an existing destination
   const openModalForEdit = (destination) => {
     setEditingDestination(destination);
     setFormData({
       name: destination.name,
       description: destination.description,
       imageUrls: destination.imageUrls || [],
+      videoUrl: destination.videoUrl || "",
     });
     setIsModalOpen(true);
   };
 
-  // 4) Handle changes in text fields (Name, Description)
+  // 4) Handle changes in text fields
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 5) Cloudinary Upload
+  // 5) Cloudinary Image Upload
   const handleImageUpload = () => {
     // Limit to 6 images total
     if (formData.imageUrls.length >= 6) {
@@ -98,7 +99,7 @@ export default function ManageDestinations() {
           return;
         }
         if (result.event === "success") {
-          // Add the newly uploaded image URL to our array
+          // Append the uploaded image URL
           setFormData((prev) => ({
             ...prev,
             imageUrls: [...prev.imageUrls, result.info.secure_url],
@@ -134,19 +135,20 @@ export default function ManageDestinations() {
       name: formData.name,
       description: formData.description,
       imageUrls: formData.imageUrls,
+      videoUrl: formData.videoUrl,
     };
 
     try {
       let res;
       if (editingDestination) {
-        // Update
+        // Update destination
         res = await fetch(`/api/destinations/${editingDestination._id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
       } else {
-        // Create
+        // Create new destination
         res = await fetch("/api/destinations", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -159,10 +161,9 @@ export default function ManageDestinations() {
       }
       toast.success(editingDestination ? "Destination updated!" : "Destination created!");
 
-      // Close modal
+      // Close modal and refresh list
       setIsModalOpen(false);
       setEditingDestination(null);
-      // Refresh the list
       const updatedRes = await fetch("/api/destinations");
       const updatedData = await updatedRes.json();
       setDestinations(updatedData.destinations);
@@ -190,7 +191,7 @@ export default function ManageDestinations() {
     }
   };
 
-  // Render
+  // Render the admin panel
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <ToastContainer position="top-right" autoClose={3000} />
@@ -206,7 +207,7 @@ export default function ManageDestinations() {
           </button>
         </div>
 
-        {/* Table or loading/error states */}
+        {/* Destinations Table */}
         {loading ? (
           <p className="text-center">Loading destinations...</p>
         ) : error ? (
@@ -218,9 +219,10 @@ export default function ManageDestinations() {
             <table className="min-w-full bg-white shadow-md rounded-lg">
               <thead className="bg-gray-200">
                 <tr>
-                  <th className="px-4 py-2 border">Destination ID</th>
+                  <th className="px-4 py-2 border">ID</th>
                   <th className="px-4 py-2 border">Name</th>
                   <th className="px-4 py-2 border">Description</th>
+                  <th className="px-4 py-2 border">Video URL</th>
                   <th className="px-4 py-2 border">Actions</th>
                 </tr>
               </thead>
@@ -233,6 +235,9 @@ export default function ManageDestinations() {
                       {dest.description.length > 60
                         ? dest.description.slice(0, 60) + "..."
                         : dest.description}
+                    </td>
+                    <td className="px-4 py-2 border text-sm">
+                      {dest.videoUrl ? dest.videoUrl : "N/A"}
                     </td>
                     <td className="px-4 py-2 border text-sm">
                       <div className="flex space-x-2">
@@ -293,9 +298,22 @@ export default function ManageDestinations() {
                   value={formData.description}
                   onChange={handleChange}
                   className="w-full border p-2 rounded"
-                  rows={3}
+                  rows={4}
                   required
                 ></textarea>
+              </div>
+
+              {/* Video URL */}
+              <div>
+                <label className="block text-gray-700 mb-1">Video URL (optional)</label>
+                <input
+                  type="text"
+                  name="videoUrl"
+                  value={formData.videoUrl}
+                  onChange={handleChange}
+                  className="w-full border p-2 rounded"
+                  placeholder="https://"
+                />
               </div>
 
               {/* Image Upload */}
@@ -315,8 +333,6 @@ export default function ManageDestinations() {
                 {imageUploadError && (
                   <p className="text-red-600 text-sm mt-2">{imageUploadError}</p>
                 )}
-
-                {/* Display images */}
                 {formData.imageUrls.length > 0 && (
                   <div className="mt-4 grid grid-cols-3 gap-4">
                     {formData.imageUrls.map((url, index) => (

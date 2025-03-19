@@ -4,8 +4,8 @@ import Destination from '../models/destination.model.js';
 // Create a new destination
 export const createDestination = async (req, res, next) => {
   try {
-    const { name, description, imageUrls } = req.body;
-    const destination = await Destination.create({ name, description, imageUrls });
+    const { name, description, imageUrls, videoUrl } = req.body;
+    const destination = await Destination.create({ name, description, imageUrls, videoUrl });
     return res.status(201).json({ success: true, destination });
   } catch (error) {
     next(error);
@@ -57,6 +57,17 @@ export const deleteDestination = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Destination not found' });
     }
     return res.status(200).json({ success: true, message: 'Destination deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get Editor's Choice Destinations (all destinations)
+export const getEditorsChoiceDestinations = async (req, res, next) => {
+  try {
+    // Returns all destinations curated by the admin for hidden spots.
+    const destinations = await Destination.find({}).sort({ createdAt: -1 });
+    return res.status(200).json({ success: true, destinations });
   } catch (error) {
     next(error);
   }

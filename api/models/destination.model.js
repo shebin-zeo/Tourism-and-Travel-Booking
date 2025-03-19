@@ -17,6 +17,9 @@ const destinationSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    videoUrl: {
+      type: String, // Optional video URL for rich media content
+    },
   },
   { timestamps: true }
 );

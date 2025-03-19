@@ -4,7 +4,7 @@ import { FaMapMarkedAlt, FaBoxOpen, FaClipboardList, FaUsers, FaPlusCircle, FaUs
 
 export default function AdminDashboard() {
   const adminOptions = [
-    { name: "Manage Destinations", icon: <FaMapMarkedAlt />, path: "/admin/manage-destinations" },
+    { name: "Editor's Choice", icon: <FaMapMarkedAlt />, path: "/admin/manage-destinations" },
     { name: "Manage Packages", icon: <FaBoxOpen />, path: "/admin/manage-packages" },
     { name: "Create Package", icon: <FaPlusCircle />, path: "/admin/create-package" },
     { name: "Manage Bookings", icon: <FaClipboardList />, path: "/admin/manage-bookings" },

@@ -1,133 +1,82 @@
-// src/pages/DestinationsList.jsx
+// src/pages/EditorsChoice.jsx
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
+export default function EditorsChoice() {
+  const [destinations, setDestinations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
+  useEffect(() => {
+    async function fetchEditorsChoice() {
+      try {
+        const res = await fetch("/api/destinations/editor-choice", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || "Failed to fetch editor's choice destinations");
+        }
+        setDestinations(data.destinations);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchEditorsChoice();
+  }, []);
 
-// The original code has been commented out while the site is under construction.
-// You can uncomment it later when you're ready to launch this section.
+  if (loading) {
+    return <div className="p-8 text-center">Loading Editors Choice...</div>;
+  }
 
-//
-// import { useEffect, useState } from "react";
-// import { Link } from "react-router-dom";
-//
-// export default function DestinationsList() {
-//   const [destinations, setDestinations] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState("");
-//   const [filter, setFilter] = useState("All");
-//
-//   useEffect(() => {
-//     async function fetchData() {
-//       try {
-//         const res = await fetch("/api/destinations", {
-//           method: "GET",
-//           headers: { "Content-Type": "application/json" },
-//         });
-//         const data = await res.json();
-//         if (!res.ok) {
-//           throw new Error(data.message || "Failed to fetch destinations");
-//         }
-//         setDestinations(data.destinations);
-//       } catch (err) {
-//         setError(err.message);
-//       } finally {
-//         setLoading(false);
-//       }
-//     }
-//     fetchData();
-//   }, []);
-//
-//   // Filter destinations based on selected type.
-//   const filteredDestinations = destinations.filter((dest) => {
-//     if (filter === "All") return true;
-//     // Assumes each destination document has a 'type' field.
-//     return dest.type === filter;
-//   });
-//
-//   if (loading) {
-//     return <div className="p-8 text-center">Loading Destinations...</div>;
-//   }
-//
-//   if (error) {
-//     return <div className="p-8 text-center text-red-600">Error: {error}</div>;
-//   }
-//
-//   if (destinations.length === 0) {
-//     return <div className="p-8 text-center">No destinations found.</div>;
-//   }
-//
-//   return (
-//     <div className="max-w-6xl mx-auto p-4">
-//       <h1 className="text-3xl font-bold mb-6 text-indigo-600 text-center">All Destinations</h1>
-//
-//       {/* Filtering Dropdown */}
-//       <div className="flex justify-end mb-4">
-//         <select
-//           value={filter}
-//           onChange={(e) => setFilter(e.target.value)}
-//           className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-//         >
-//           <option value="All">All</option>
-//           <option value="Adventure">Adventure</option>
-//           <option value="Cultural">Cultural</option>
-//           <option value="Relaxation">Relaxation</option>
-//           <option value="Luxury">Luxury</option>
-//           <option value="Island">Island</option>
-//           <option value="Historical">Historical</option>
-//         </select>
-//       </div>
-//
-//       {/* Destinations Grid */}
-//       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-//         {filteredDestinations.map((dest) => (
-//           <div
-//             key={dest._id}
-//             className="bg-white shadow-lg rounded-lg p-4 transform hover:scale-105 transition-all duration-300"
-//           >
-//             {dest.imageUrls && dest.imageUrls.length > 0 && (
-//               <img
-//                 src={dest.imageUrls[0]}
-//                 alt={dest.name}
-//                 className="w-full h-48 object-cover rounded"
-//               />
-//             )}
-//             <h2 className="text-xl font-bold mt-4">{dest.name}</h2>
-//             <p className="text-gray-700 mt-2">
-//               {dest.description.length > 80
-//                 ? dest.description.slice(0, 80) + "..."
-//                 : dest.description}
-//             </p>
-//             <div className="mt-4 flex justify-between items-center">
-//               <Link
-//                 to={`/destination/${dest._id}`}
-//                 className="bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 transition"
-//               >
-//                 View Details
-//               </Link>
-//               {dest.type && (
-//                 <span className="text-sm text-gray-500 italic">
-//                   {dest.type}
-//                 </span>
-//               )}
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
+  if (error) {
+    return <div className="p-8 text-center text-red-600">Error: {error}</div>;
+  }
 
-export default function DestinationsList() {
-  // While the destinations page is under construction,
-  // display a professional "Site Under Construction" message.
+  if (destinations.length === 0) {
+    return <div className="p-8 text-center">No hidden spots found.</div>;
+  }
+
   return (
-    <div className="max-w-6xl mx-auto p-8">
-      <h1 className="text-4xl font-bold text-center text-indigo-600 mb-4">
-        Site Under Construction
+    <div className="max-w-6xl mx-auto p-4">
+      <h1 className="text-4xl font-bold text-center text-indigo-600 mb-8">
+      Explore Kerala Tourism 
       </h1>
-      <p className="text-center text-gray-700 text-lg">
-        We are currently working hard to bring you a new and improved destinations page.
-        Please check back soon for an amazing travel experience!
-      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {destinations.map((dest) => (
+          <Link key={dest._id} to={`/destination/${dest._id}`} className="block">
+            <div className="bg-white shadow-lg rounded-lg overflow-hidden transform hover:scale-105 transition duration-300">
+              {dest.videoUrl ? (
+                <video controls className="w-full h-64 object-cover">
+                  <source src={dest.videoUrl} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                dest.imageUrls && dest.imageUrls.length > 0 && (
+                  <img
+                    src={dest.imageUrls[0]}
+                    alt={dest.name}
+                    className="w-full h-64 object-cover"
+                  />
+                )
+              )}
+              <div className="p-4">
+                <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+                  {dest.name}
+                </h2>
+                <p className="text-gray-600">
+                  {dest.description.length > 100
+                    ? dest.description.slice(0, 100) + "..."
+                    : dest.description}
+                </p>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
