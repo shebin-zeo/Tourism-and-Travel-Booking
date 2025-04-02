@@ -6,7 +6,7 @@ const travellerSchema = new mongoose.Schema({
   age: { type: Number, required: true },
   gender: { type: String, required: true },
   country: { type: String, required: true },
-  preferences: { type: String },
+  //preferences: { type: String },
   contact: { type: String, required: true },
   email: { type: String, required: true },
 });
@@ -54,6 +54,8 @@ const bookingSchema = new mongoose.Schema(
      cancelledAt: { type: Date },
      penaltyPercentage: { type: Number, default: 0 },
      refundAmount: { type: Number, default: 0 },
+    // Use a single consistent field name for extra preferences:
+    selectedPreferences: { type: [String], default: [] },
   },
   { timestamps: true }
 );

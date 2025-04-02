@@ -64,6 +64,9 @@ const listingSchema = new mongoose.Schema(
       default: true,
       required: true,
     },
+     
+     // NEW: Define preferences as an array of strings.
+    preferences: { type: [String], default: [] },
   },
   { timestamps: true }
 );

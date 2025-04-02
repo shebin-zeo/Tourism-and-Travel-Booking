@@ -21,6 +21,9 @@ export default function AdminDashboard() {
     transport: false,
     itinerary: '',
   });
+  // NEW: State for dynamic extra preferences in update modal.
+  const [updatePreferences, setUpdatePreferences] = useState([]);
+  const [newPreference, setNewPreference] = useState('');
   
   // States for delete confirmation modal
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -129,6 +132,7 @@ export default function AdminDashboard() {
       showNotification('Error updating package availability: ' + err.message, 'error');
     }
   };
+
   // Open the update modal and pre-fill the form with the selected listing data.
   const openUpdateModal = (listing) => {
     setSelectedListing(listing);
@@ -145,6 +149,9 @@ export default function AdminDashboard() {
       transport: listing.transport,
       itinerary: Array.isArray(listing.itinerary) ? listing.itinerary.join('\n') : '',
     });
+    // NEW: Pre-fill dynamic preferences from the listing (if any)
+    setUpdatePreferences(Array.isArray(listing.preferences) ? listing.preferences : []);
+    setNewPreference('');
     setIsUpdateModalOpen(true);
   };
 
@@ -157,6 +164,24 @@ export default function AdminDashboard() {
     }));
   };
 
+  // NEW: Handle new preference input change.
+  const handleNewPreferenceChange = (e) => {
+    setNewPreference(e.target.value);
+  };
+
+  // NEW: Add new preference to the dynamic list.
+  const handleAddPreference = () => {
+    if (newPreference.trim() !== "") {
+      setUpdatePreferences((prev) => [...prev, newPreference.trim()]);
+      setNewPreference('');
+    }
+  };
+
+  // NEW: Remove a preference from the dynamic list.
+  const handleRemovePreference = (index) => {
+    setUpdatePreferences((prev) => prev.filter((_, i) => i !== index));
+  };
+
   // Submit the updated listing data.
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
@@ -167,6 +192,8 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           ...updateFormData,
           itinerary: updateFormData.itinerary.split('\n'),
+          // NEW: Use the dynamic preferences array
+          preferences: updatePreferences,
         }),
       });
       const data = await res.json();
@@ -350,6 +377,42 @@ export default function AdminDashboard() {
                     required
                   />
                 </div>
+              </div>
+              {/* NEW: Extra Preferences Dynamic Field */}
+              <div>
+                <label className="block text-gray-700">Extra Preferences</label>
+                <div className="flex items-center mt-2">
+                  <input
+                    type="text"
+                    value={newPreference}
+                    onChange={handleNewPreferenceChange}
+                    placeholder="Enter a preference"
+                    className="p-2 border rounded-l w-full focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddPreference}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-r hover:bg-indigo-700 focus:outline-none"
+                  >
+                    Add
+                  </button>
+                </div>
+                {updatePreferences.length > 0 && (
+                  <ul className="list-disc ml-4 mt-2 text-gray-700">
+                    {updatePreferences.map((pref, index) => (
+                      <li key={index} className="flex justify-between items-center">
+                        <span>{pref}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePreference(index)}
+                          className="text-red-600 hover:text-red-800 focus:outline-none"
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center">

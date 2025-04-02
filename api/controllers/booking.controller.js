@@ -35,7 +35,7 @@ export const getMyBookings = async (req, res, next) => {
 // Create a booking (User must be logged in)
 export const createBooking = async (req, res, next) => {
   try {
-    const { packageId, travellers, preferredDate } = req.body;
+    const { packageId, travellers, preferredDate,selectedPreferences } = req.body;
     if (!req.user || !req.user.id) {
       return res.status(401).json({ message: 'User must be logged in to create a booking' });
     }
@@ -44,6 +44,7 @@ export const createBooking = async (req, res, next) => {
       user: req.user.id,
       travellers,
       bookingDate: preferredDate || Date.now(),
+      selectedPreferences, // Store selected preferences directly
     });
     const populatedBooking = await Booking.findById(booking._id)
       .populate('package', 'title')

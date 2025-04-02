@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FaEdit, FaTrash, FaTimes, FaCheck, FaUserPlus } from "react-icons/fa";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -9,13 +9,19 @@ export default function AdminBookings() {
   const [selectedGuideId, setSelectedGuideId] = useState(""); // Selected guide from dropdown
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [expandedBookingId, setExpandedBookingId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [bookingToDelete, setBookingToDelete] = useState(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [bookingToAssign, setBookingToAssign] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [notification, setNotification] = useState({ message: "", type: "", visible: false });
+  const [notification, setNotification] = useState({
+    message: "",
+    type: "",
+    visible: false,
+  });
+  // New state for view details modal:
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [bookingToView, setBookingToView] = useState(null);
 
   const showNotification = (message, type) => {
     setNotification({ message, type, visible: true });
@@ -39,7 +45,9 @@ export default function AdminBookings() {
         });
         const contentType = res.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
-          throw new Error("Server did not return JSON. Please check the backend.");
+          throw new Error(
+            "Server did not return JSON. Please check the backend."
+          );
         }
         const data = await res.json();
         if (!res.ok) {
@@ -81,8 +89,14 @@ export default function AdminBookings() {
     }
   }, [isAssignModalOpen]);
 
-  const toggleExpanded = (bookingId) => {
-    setExpandedBookingId(expandedBookingId === bookingId ? null : bookingId);
+  const openViewModal = (booking) => {
+    setBookingToView(booking);
+    setIsViewModalOpen(true);
+  };
+
+  const closeViewModal = () => {
+    setBookingToView(null);
+    setIsViewModalOpen(false);
   };
 
   const handleApprove = async (bookingId) => {
@@ -198,7 +212,11 @@ export default function AdminBookings() {
     return <div className="container mx-auto p-4">Loading bookings...</div>;
   }
   if (error) {
-    return <div className="container mx-auto p-4 text-red-600">Error: {error}</div>;
+    return (
+      <div className="container mx-auto p-4 text-red-600">
+        Error: {error}
+      </div>
+    );
   }
 
   return (
@@ -242,7 +260,9 @@ export default function AdminBookings() {
                   <td className="px-4 py-2 border text-sm">
                     {new Date(booking.bookingDate).toLocaleString()}
                   </td>
-                  <td className="px-4 py-2 border text-sm">{booking.travellers.length}</td>
+                  <td className="px-4 py-2 border text-sm">
+                    {booking.travellers.length}
+                  </td>
                   <td className="px-4 py-2 border text-sm">
                     {booking.guide
                       ? booking.guide.username || booking.guide.email
@@ -258,9 +278,10 @@ export default function AdminBookings() {
                     )}
                   </td>
                   <td className="px-4 py-2 border text-sm">
-                    {/* If booking is cancelled, disable all actions */}
                     {booking.cancelled ? (
-                      <span className="text-gray-600">No actions available</span>
+                      <span className="text-gray-600">
+                        No actions available
+                      </span>
                     ) : (
                       <div className="flex space-x-2">
                         {!booking.approved && (
@@ -272,18 +293,10 @@ export default function AdminBookings() {
                           </button>
                         )}
                         <button
-                          onClick={() => toggleExpanded(booking._id)}
+                          onClick={() => openViewModal(booking)}
                           className="flex items-center bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition duration-200"
                         >
-                          {expandedBookingId === booking._id ? (
-                            <>
-                              <FaTimes className="mr-1" /> Hide Details
-                            </>
-                          ) : (
-                            <>
-                              <FaEdit className="mr-1" /> View Details
-                            </>
-                          )}
+                          <FaEdit className="mr-1" /> View Details
                         </button>
                         <button
                           onClick={() => openDeleteModal(booking._id)}
@@ -316,69 +329,103 @@ export default function AdminBookings() {
         </div>
       )}
 
-      {expandedBookingId && (
-        <div className="mt-6 bg-gray-50 p-6 rounded shadow-md">
-          {bookings
-            .filter((b) => b._id === expandedBookingId)
-            .map((booking) => (
-              <div key={booking._id}>
-                <h2 className="text-2xl font-bold mb-4">Booking Details</h2>
-                <p>
-                  <span className="font-semibold">Booking ID:</span> {booking._id}
-                </p>
-                <p>
-                  <span className="font-semibold">Package:</span>{" "}
-                  {booking.package && booking.package.title ? booking.package.title : "N/A"}
-                </p>
-                <p>
-                  <span className="font-semibold">User:</span>{" "}
-                  {booking.user &&
-                  (booking.user.username || booking.user.email)
-                    ? booking.user.username || booking.user.email
-                    : "N/A"}
-                </p>
-                <p>
-                  <span className="font-semibold">Booking Date:</span>{" "}
-                  {new Date(booking.bookingDate).toLocaleString()}
-                </p>
-                <h3 className="text-xl font-semibold mt-4 mb-2">Traveller Details:</h3>
-                {booking.travellers && booking.travellers.length > 0 ? (
-                  booking.travellers.map((traveller, index) => (
-                    <div key={index} className="border p-4 rounded mb-2">
-                      <p>
-                        <span className="font-semibold">Name:</span> {traveller.name}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Age:</span> {traveller.age}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Gender:</span> {traveller.gender}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Country:</span> {traveller.country}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Contact:</span> {traveller.contact}{" "}
-                        <a href={`tel:${traveller.contact}`} className="text-blue-600 hover:underline ml-2">
-                          Call
-                        </a>
-                      </p>
-                      <p>
-                        <span className="font-semibold">Email:</span> {traveller.email}{" "}
-                        <a href={`mailto:${traveller.email}`} className="text-blue-600 hover:underline ml-2">
-                          Email
-                        </a>
-                      </p>
-                      <p>
-                        <span className="font-semibold">Preferences:</span> {traveller.preferences || "None"}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <p>No traveller details available.</p>
-                )}
-              </div>
-            ))}
+      {/* View Details Modal */}
+      {isViewModalOpen && bookingToView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Booking Details</h2>
+              <button
+                onClick={closeViewModal}
+                className="text-red-600 hover:text-red-800"
+              >
+                <FaTimes size={20} />
+              </button>
+            </div>
+            <p>
+              <span className="font-semibold">Booking ID:</span>{" "}
+              {bookingToView._id}
+            </p>
+            <p>
+              <span className="font-semibold">Package:</span>{" "}
+              {bookingToView.package && bookingToView.package.title
+                ? bookingToView.package.title
+                : "N/A"}
+            </p>
+            <p>
+              <span className="font-semibold">User:</span>{" "}
+              {bookingToView.user &&
+              (bookingToView.user.username || bookingToView.user.email)
+                ? bookingToView.user.username || bookingToView.user.email
+                : "N/A"}
+            </p>
+            <p>
+              <span className="font-semibold">Booking Date:</span>{" "}
+              {new Date(bookingToView.bookingDate).toLocaleString()}
+            </p>
+            <h3 className="text-xl font-semibold mt-4 mb-2">
+              Traveller Details:
+            </h3>
+            {bookingToView.travellers && bookingToView.travellers.length > 0 ? (
+              bookingToView.travellers.map((traveller, index) => (
+                <div key={index} className="border p-4 rounded mb-2">
+                  <p>
+                    <span className="font-semibold">Name:</span>{" "}
+                    {traveller.name}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Age:</span>{" "}
+                    {traveller.age}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Gender:</span>{" "}
+                    {traveller.gender}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Country:</span>{" "}
+                    {traveller.country}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Contact:</span>{" "}
+                    {traveller.contact}{" "}
+                    <a
+                      href={`tel:${traveller.contact}`}
+                      className="text-blue-600 hover:underline ml-2"
+                    >
+                      Call
+                    </a>
+                  </p>
+                  <p>
+                    <span className="font-semibold">Email:</span>{" "}
+                    {traveller.email}{" "}
+                    <a
+                      href={`mailto:${traveller.email}`}
+                      className="text-blue-600 hover:underline ml-2"
+                    >
+                      Email
+                    </a>
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p>No traveller details available.</p>
+            )}
+            <div className="mt-4">
+              <h3 className="text-xl font-semibold">
+                User Selected Extra Preferences:
+              </h3>
+              {bookingToView.selectedPreferences &&
+              bookingToView.selectedPreferences.length > 0 ? (
+                <ul className="list-disc ml-4 text-gray-700">
+                  {bookingToView.selectedPreferences.map((pref, index) => (
+                    <li key={index}>{pref}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-600">None</p>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -394,7 +441,7 @@ export default function AdminBookings() {
             </p>
             <div className="flex space-x-4">
               <button
-                onClick={closeDeleteModal}
+                onClick={() => setShowDeleteModal(false)}
                 className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
               >
                 Cancel
@@ -429,8 +476,13 @@ export default function AdminBookings() {
               <option value="">-- Select Guide --</option>
               {availableGuides && availableGuides.length > 0 ? (
                 availableGuides.map((guide) => (
-                  <option key={guide._id} value={guide._id} disabled={!guide.available}>
-                    {guide.username} ({guide.email}) {guide.available ? "" : " - Busy"}
+                  <option
+                    key={guide._id}
+                    value={guide._id}
+                    disabled={!guide.available}
+                  >
+                    {guide.username} ({guide.email}){" "}
+                    {guide.available ? "" : " - Busy"}
                   </option>
                 ))
               ) : (
@@ -439,7 +491,10 @@ export default function AdminBookings() {
             </select>
             <div className="flex justify-end space-x-2">
               <button
-                onClick={closeAssignModal}
+                onClick={() => {
+                  setBookingToAssign(null);
+                  setIsAssignModalOpen(false);
+                }}
                 className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
               >
                 Cancel
@@ -458,7 +513,11 @@ export default function AdminBookings() {
       {/* Notification Modal */}
       {notification.visible && (
         <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 border border-gray-200 z-50">
-          <p className={`text-lg ${notification.type === "success" ? "text-green-600" : "text-red-600"}`}>
+          <p
+            className={`text-lg ${
+              notification.type === "success" ? "text-green-600" : "text-red-600"
+            }`}
+          >
             {notification.message}
           </p>
         </div>

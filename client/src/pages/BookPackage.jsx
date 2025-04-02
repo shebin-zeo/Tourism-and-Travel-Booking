@@ -1,4 +1,3 @@
-// client/src/pages/BookPackage.jsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
@@ -15,12 +14,12 @@ export default function BookPackage() {
       age: "",
       gender: "",
       country: "",
-      preferences: "",
       contact: "",
       email: "",
       usePrevious: false,
     },
   ]);
+  const [selectedPreferences, setSelectedPreferences] = useState([]); // For extra preferences selection
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -36,6 +35,10 @@ export default function BookPackage() {
         const data = await res.json();
         if (!res.ok) {
           throw new Error(data.message || "Failed to fetch package details");
+        }
+        // Ensure preferences is defined as an array even if empty.
+        if (!data.listing.preferences) {
+          data.listing.preferences = [];
         }
         setPackageDetails(data.listing);
       } catch (err) {
@@ -88,7 +91,6 @@ export default function BookPackage() {
         age: "",
         gender: "",
         country: "",
-        preferences: "",
         contact: "",
         email: "",
         usePrevious: false,
@@ -103,12 +105,22 @@ export default function BookPackage() {
     }
   };
 
+  // Handle extra preference checkbox toggling.
+  const handlePreferenceToggle = (pref) => {
+    setSelectedPreferences((prev) =>
+      prev.includes(pref)
+        ? prev.filter((p) => p !== pref)
+        : [...prev, pref]
+    );
+  };
+
   // Handle booking submission and redirect to PaymentPage.
   const handleBooking = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg("");
-    const payload = { packageId: id, travellers };
+    // Include selectedPreferences in the payload.
+    const payload = { packageId: id, travellers, selectedPreferences };
 
     try {
       const res = await fetch("/api/bookings", {
@@ -221,17 +233,6 @@ export default function BookPackage() {
                     required
                   />
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-gray-700">Preferences</label>
-                  <textarea
-                    name="preferences"
-                    value={traveller.preferences}
-                    onChange={(e) => handleTravellerChange(index, e)}
-                    rows="3"
-                    className="mt-1 w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                    placeholder="Any special preferences or dietary requirements"
-                  ></textarea>
-                </div>
                 <div>
                   <label className="block text-gray-700">Contact No</label>
                   <input
@@ -271,6 +272,30 @@ export default function BookPackage() {
               </div>
             </div>
           ))}
+          {/* Extra Preferences Section (from Admin as checkboxes) */}
+          {packageDetails.preferences && packageDetails.preferences.length > 0 && (
+            <div className="p-4 border rounded-lg shadow-sm bg-gray-50">
+              <h3 className="text-lg font-semibold mb-2">
+                Select Special Preferences / Dietary Requirements:
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {packageDetails.preferences.map((pref, index) => (
+                  <div key={index} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={`pref-${index}`}
+                      checked={selectedPreferences.includes(pref)}
+                      onChange={() => handlePreferenceToggle(pref)}
+                      className="mr-2"
+                    />
+                    <label htmlFor={`pref-${index}`} className="text-gray-700">
+                      {pref}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="flex justify-center">
             <button
               type="button"

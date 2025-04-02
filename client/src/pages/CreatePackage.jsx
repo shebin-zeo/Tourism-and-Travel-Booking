@@ -7,6 +7,10 @@ export default function CreatePackage() {
   const [accommodations, setAccommodations] = useState(false);
   const [transport, setTransport] = useState(false);
 
+  // NEW: State for dynamic preferences
+  const [preferences, setPreferences] = useState([]);
+  const [newPreference, setNewPreference] = useState('');
+
   // State for form data (including Cloudinary image URLs)
   const [formData, setFormData] = useState({
     imageUrls: [],
@@ -28,7 +32,7 @@ export default function CreatePackage() {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Cloudinary image upload function
+  // Cloudinary image upload function remains unchanged
   const handleImageSubmit = () => {
     if (formData.imageUrls.length >= 6) {
       setImageUploadError('You can only upload 6 images per listing');
@@ -85,6 +89,24 @@ export default function CreatePackage() {
     setter(e.target.checked);
   };
 
+  // NEW: Handle new preference input changes
+  const handleNewPreferenceChange = (e) => {
+    setNewPreference(e.target.value);
+  };
+
+  // NEW: Add new preference to the list
+  const handleAddPreference = () => {
+    if (newPreference.trim() !== '') {
+      setPreferences([...preferences, newPreference.trim()]);
+      setNewPreference('');
+    }
+  };
+
+  // NEW: Remove a preference from the list
+  const handleRemovePreference = (index) => {
+    setPreferences(preferences.filter((_, i) => i !== index));
+  };
+
   // Function to reset the form for a new package creation
   const resetForm = () => {
     setFormData({
@@ -101,6 +123,8 @@ export default function CreatePackage() {
     setOffer(false);
     setAccommodations(false);
     setTransport(false);
+    setPreferences([]);
+    setNewPreference('');
   };
 
   // Close the success modal and reset the form so the admin can create a new package
@@ -118,7 +142,7 @@ export default function CreatePackage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Prepare the full data object by merging checkbox states
+    // Prepare the full data object by merging checkbox states and preferences
     const dataToSend = {
       title: formData.package_title, // 'package_title' to 'title'
       description: formData.description,
@@ -132,6 +156,7 @@ export default function CreatePackage() {
       transport,
       itinerary: formData.itinerary.split("\n"), // Assuming itinerary is entered with line breaks
       imageUrls: formData.imageUrls,
+      preferences, // NEW: include the array of preferences
       adminRef: '65f3a1234567890abcdef', // Replace with actual admin reference
       guideRef: '65f3b9876543210fedcba', // Replace with actual guide reference
     };
@@ -244,7 +269,7 @@ export default function CreatePackage() {
             <option value="Relaxation">Relaxation</option>
             <option value="Cultural">Cultural</option>
             <option value="Luxury">Luxury</option>
-            <option value="Island"> Island </option>
+            <option value="Island">Island</option>
             <option value="Historical">Historical</option>
           </select>
         </div>
@@ -386,6 +411,43 @@ export default function CreatePackage() {
             />
             <span>Transport Included</span>
           </div>
+        </div>
+
+        {/* NEW: Extra Preferences Section */}
+        <div className="flex flex-col">
+          <label className="text-lg font-medium text-gray-700">Extra Preferences</label>
+          <div className="flex items-center mt-2">
+            <input
+              type="text"
+              value={newPreference}
+              onChange={handleNewPreferenceChange}
+              placeholder="Enter a preference (e.g., 'Vegetarian Meals')"
+              className="p-2 border rounded-l-lg focus:ring-2 focus:ring-indigo-500"
+            />
+            <button
+              type="button"
+              onClick={handleAddPreference}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-r-lg hover:bg-indigo-700"
+            >
+              Add
+            </button>
+          </div>
+          {preferences.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {preferences.map((pref, index) => (
+                <li key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded">
+                  <span>{pref}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePreference(index)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {/* Submit Button */}
