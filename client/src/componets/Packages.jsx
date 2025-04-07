@@ -50,17 +50,25 @@ export default function Packages() {
                 <p className="text-gray-300 text-sm">This package is currently not available.</p>
               </div>
             )}
-            <div className="p-4">
-              <h2 className="text-xl font-semibold">{pkg.title}</h2>
-              <p className="text-gray-600 mt-2">{pkg.destination}</p>
-              <p className="mt-2 font-bold">${pkg.regularPrice}</p>
-              <Link
-                to={`/package/${pkg._id}`}
-                className="mt-4 inline-block text-yellow-500 hover:underline"
-              >
-                View Details
-              </Link>
-            </div>
+           
+           <div className="p-4">
+  <h2 className="text-xl font-semibold">{pkg.title}</h2>
+  <p className="text-gray-600 mt-2">{pkg.destination}</p>
+  {pkg.discountPrice && Number(pkg.discountPrice) < Number(pkg.regularPrice) ? (
+    <p className="mt-2 font-bold">
+      <span className="text-red-500 line-through mr-2">${pkg.regularPrice}</span>
+      <span className="text-green-600">${pkg.discountPrice}</span>
+    </p>
+  ) : (
+    <p className="mt-2 font-bold">${pkg.regularPrice}</p>
+  )}
+  <Link
+    to={`/package/${pkg._id}`}
+    className="mt-4 inline-block text-yellow-500 hover:underline"
+  >
+    View Details
+  </Link>
+</div>
           </div>
         ))}
       </div>
