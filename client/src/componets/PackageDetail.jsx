@@ -161,7 +161,14 @@ export default function PackageDetails() {
             </div>
             <div>
               <p className="text-lg font-semibold">Price:</p>
-              <p className="text-green-600 font-bold">${pkg.regularPrice}</p>
+              {pkg.discountPrice && Number(pkg.discountPrice) < Number(pkg.regularPrice) ? (
+                <p className="font-bold">
+                  <span className="text-red-500 line-through mr-2">${pkg.regularPrice}</span>
+                  <span className="text-green-600">${pkg.discountPrice}</span>
+                </p>
+              ) : (
+                <p className="text-green-600 font-bold">${pkg.regularPrice}</p>
+              )}
             </div>
             <div>
               <p className="text-lg font-semibold">Duration:</p>

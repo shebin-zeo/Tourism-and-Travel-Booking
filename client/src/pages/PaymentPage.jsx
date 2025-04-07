@@ -19,12 +19,21 @@ export default function PaymentPage() {
     cvv: "",
   });
 
-  // Compute total amount from booking details if not stored
+  // Compute effective package price using discount if available.
+  // First, check if a totalAmount is already provided from the backend.
   const computeTotalAmount = (booking) => {
+    if (booking.totalAmount) return Number(booking.totalAmount);
     if (!booking.travellers || booking.travellers.length === 0) return 0;
-    const price = booking.package?.regularPrice
-      ? Number(booking.package.regularPrice)
-      : 100; // default dummy price
+    const pkg = booking.package || {};
+    const discountPrice = Number(pkg.discountPrice);
+    const regularPrice = Number(pkg.regularPrice) || 100; // fallback dummy price
+
+    // Use discountPrice if valid and lower than regularPrice
+    const price =
+      !isNaN(discountPrice) && discountPrice > 0 && discountPrice < regularPrice
+        ? discountPrice
+        : regularPrice;
+        
     return booking.travellers.reduce((total, traveller) => {
       const age = Number(traveller.age);
       if (age && age > 0) {
@@ -34,7 +43,7 @@ export default function PaymentPage() {
     }, 0);
   };
 
-  // Fetch booking details
+  // Fetch booking details from backend
   useEffect(() => {
     async function fetchBooking() {
       try {
@@ -49,6 +58,7 @@ export default function PaymentPage() {
         if (!res.ok) {
           throw new Error(data.message || "Failed to fetch booking details");
         }
+        // Prefer data.booking if available, otherwise data itself.
         if (data.booking || data._id) {
           setBooking(data.booking || data);
         } else {
@@ -64,7 +74,7 @@ export default function PaymentPage() {
     fetchBooking();
   }, [bookingId]);
 
-  // Warn if leaving page without completing payment
+  // Warn user if leaving page without completing payment
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (booking && !booking.paid) {
@@ -73,23 +83,47 @@ export default function PaymentPage() {
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    return () =>
+      window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [booking]);
 
-  // Back button with confirmation
+  // Back button handler with a toast confirmation if payment is pending
   const handleBack = useCallback(() => {
     if (booking && !booking.paid) {
-      const confirmLeave = window.confirm(
-        "Your payment is not complete. Are you sure you want to go back? Your changes may be lost."
+      toast.info(
+        <div>
+          <p className="mb-2">
+            Your payment is still pending. Leaving this page now may cancel your booking process.
+          </p>
+          <div className="flex justify-end">
+            <button
+              className="bg-blue-600 text-white px-3 py-1 mr-2 rounded hover:bg-blue-700"
+              onClick={() => {
+                toast.dismiss();
+                navigate(-1);
+              }}
+            >
+              Proceed
+            </button>
+            <button
+              className="bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700"
+              onClick={() => toast.dismiss()}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>,
+        { autoClose: false }
       );
-      if (!confirmLeave) return;
+      return;
     }
     navigate(-1);
   }, [booking, navigate]);
 
-  // Generate dummy transaction info
+  // Generate dummy transaction info for simulation
   const generateTransactionInfo = () => {
-    const transactionId = "TX-" + Date.now() + "-" + Math.floor(Math.random() * 1000);
+    const transactionId =
+      "TX-" + Date.now() + "-" + Math.floor(Math.random() * 1000);
     const reference = "REF-" + Math.floor(Math.random() * 1000000);
     return { transactionId, reference };
   };
@@ -97,7 +131,7 @@ export default function PaymentPage() {
   const handlePayment = async () => {
     setProcessing(true);
     try {
-      // Simulate payment processing delay
+      // Simulate a delay for payment processing
       await new Promise((resolve) => setTimeout(resolve, 2000));
       if (paymentMethod === "creditCard") {
         if (!cardDetails.cardNumber || !cardDetails.expiry || !cardDetails.cvv) {
@@ -105,11 +139,13 @@ export default function PaymentPage() {
         }
       }
       const { transactionId, reference } = generateTransactionInfo();
+      // Compute total amount using the computed or provided totalAmount
+      const totalAmount = computeTotalAmount(booking);
       const res = await fetch(`/api/bookings/${bookingId}/pay`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ transactionId, reference }),
+        body: JSON.stringify({ transactionId, reference, amount: totalAmount }),
       });
       const data = await res.json();
       console.log("Payment API Response:", data);
@@ -126,15 +162,15 @@ export default function PaymentPage() {
     }
   };
 
-  // Download invoice as PDF
+  // Download invoice as a PDF using jsPDF
   const downloadInvoice = () => {
     if (!booking) return;
     const totalAmount = computeTotalAmount(booking);
     const doc = new jsPDF();
-  
+
     // Header: Blue background with white text (Company Info)
     doc.setFillColor(0, 102, 204); // Blue color
-    doc.rect(0, 0, 210, 30, "F"); // Draw filled rectangle for header
+    doc.rect(0, 0, 210, 30, "F"); // Draw header rectangle
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(24);
@@ -143,17 +179,17 @@ export default function PaymentPage() {
     doc.setFont("helvetica", "normal");
     doc.text("Head Office: 123 Wander Way, Travel City, San Francisco", 15, 27);
     doc.text("Contact: +1 234 567 890  |  Email: info@wandersphere.com", 15, 33);
-  
+
     // Draw a line below header
     doc.setDrawColor(0, 102, 204);
     doc.line(15, 35, 195, 35);
-  
+
     // Invoice Title and Booking Details
     doc.setTextColor(0, 0, 0);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.text("Invoice", 15, 45);
-  
+
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
     let yPos = 55;
@@ -175,13 +211,13 @@ export default function PaymentPage() {
     yPos += 7;
     doc.line(15, yPos, 195, yPos);
     yPos += 7;
-  
+
     // Passenger Details Header
     doc.setFont("helvetica", "bold");
     doc.text("Passenger Details:", 15, yPos);
     yPos += 7;
     doc.setFont("helvetica", "normal");
-  
+
     // Loop through each traveller's details
     booking.travellers.forEach((traveller, index) => {
       doc.text(`Passenger ${index + 1}:`, 15, yPos);
@@ -203,7 +239,7 @@ export default function PaymentPage() {
         yPos = 20;
       }
     });
-  
+
     // Footer: Blue background with centered white text
     doc.setFillColor(0, 102, 204);
     doc.rect(0, 285, 210, 15, "F");
@@ -212,11 +248,9 @@ export default function PaymentPage() {
     doc.text("Thank you for choosing Wandersphere. Safe travels!", 105, 293, {
       align: "center",
     });
-  
+
     doc.save(`invoice_${booking._id}.pdf`);
   };
-  
-  
 
   if (loading) {
     return (
@@ -234,6 +268,7 @@ export default function PaymentPage() {
   }
 
   const totalAmount = computeTotalAmount(booking);
+  const pkg = booking.package;
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -253,17 +288,39 @@ export default function PaymentPage() {
             <strong>Booking ID:</strong> {booking._id}
           </p>
           <p>
-            <strong>Package:</strong> {booking.package?.title || "N/A"}
+            <strong>Package:</strong> {pkg?.title || "N/A"}
           </p>
           <p>
             <strong>User:</strong> {booking.user?.username || booking.user?.email}
           </p>
+          {pkg &&
+          !isNaN(Number(pkg.discountPrice)) &&
+          Number(pkg.discountPrice) > 0 &&
+          Number(pkg.discountPrice) < Number(pkg.regularPrice) ? (
+            <>
+              <p>
+                <strong>Original Price per Traveller:</strong>{" "}
+                <span className="line-through text-red-500">
+                  ${Number(pkg.regularPrice).toFixed(2)}
+                </span>
+              </p>
+              <p>
+                <strong>Discounted Price per Traveller:</strong>{" "}
+                <span className="text-green-600">
+                  ${Number(pkg.discountPrice).toFixed(2)}
+                </span>
+              </p>
+            </>
+          ) : (
+            <p>
+              <strong>Price per Traveller:</strong> ${Number(pkg?.regularPrice).toFixed(2)}
+            </p>
+          )}
           <p>
             <strong>Total Amount:</strong> ${totalAmount.toFixed(2)}
           </p>
           <p>
-            <strong>Payment Status:</strong>{" "}
-            {booking.paid ? "Paid" : "Unpaid"}
+            <strong>Payment Status:</strong> {booking.paid ? "Paid" : "Unpaid"}
           </p>
         </div>
         {!booking.paid ? (

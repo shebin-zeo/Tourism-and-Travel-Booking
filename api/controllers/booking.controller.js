@@ -180,7 +180,7 @@ export const getBooking = async (req, res, next) => {
       return res.status(400).json({ message: "Invalid Booking ID" });
     }
     const booking = await Booking.findById(bookingId)
-      .populate("package", "title regularPrice")
+      .populate("package", "title regularPrice discountPrice")
       .populate("user", "username email")
       .populate("guide", "username email");
     if (!booking) {
@@ -206,7 +206,7 @@ export const payBooking = async (req, res, next) => {
       { paid: true, transactionId, reference },
       { new: true }
     )
-      .populate("package", "title regularPrice")
+      .populate("package", "title regularPrice discountPrice")
       .populate("user", "username email")
       .populate("guide", "username email");
     if (!booking) {
@@ -235,7 +235,7 @@ export const cancelBooking = async (req, res, next) => {
   try {
     const bookingId = req.params.id;
     // Find the booking and populate package data (for price)
-    const booking = await Booking.findById(bookingId).populate("package", "regularPrice");
+    const booking = await Booking.findById(bookingId).populate("package", "regularPrice discountPrice");
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
@@ -259,8 +259,17 @@ export const cancelBooking = async (req, res, next) => {
     } else if (hoursSinceBooking > 24) {
       penaltyPercentage = 20; // 20% penalty if cancellation after 24 hours
     }
-    // Calculate total booking amount (assuming package price * number of travellers)
-    const packagePrice = booking.package ? Number(booking.package.regularPrice) : 0;
+
+    // Use discountPrice if valid and lower than regularPrice, else use regularPrice.
+    const regularPrice = booking.package ? Number(booking.package.regularPrice) : 0;
+    const discountPrice =
+      booking.package && booking.package.discountPrice
+        ? Number(booking.package.discountPrice)
+        : 0;
+    const packagePrice =
+      discountPrice > 0 && discountPrice < regularPrice ? discountPrice : regularPrice;
+
+    // Calculate total booking amount (price * number of travellers)
     const totalAmount = packagePrice * booking.travellers.length;
     const penaltyAmount = (penaltyPercentage / 100) * totalAmount;
     const refundAmount = totalAmount - penaltyAmount;

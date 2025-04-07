@@ -48,8 +48,15 @@ export default function BookPackage() {
     fetchPackageDetails();
   }, [id]);
 
-  // Calculate package price and total amount.
-  const packagePrice = packageDetails ? Number(packageDetails.regularPrice) : 0;
+  // Calculate effective package price: use discount price if available and lower than regular.
+  const packagePrice = packageDetails
+    ? packageDetails.discountPrice &&
+      Number(packageDetails.discountPrice) < Number(packageDetails.regularPrice)
+      ? Number(packageDetails.discountPrice)
+      : Number(packageDetails.regularPrice)
+    : 0;
+
+  // Calculate total amount.
   const totalAmount = travellers.reduce((total, traveller) => {
     const age = Number(traveller.age);
     if (age && age > 0) {
@@ -108,9 +115,7 @@ export default function BookPackage() {
   // Handle extra preference checkbox toggling.
   const handlePreferenceToggle = (pref) => {
     setSelectedPreferences((prev) =>
-      prev.includes(pref)
-        ? prev.filter((p) => p !== pref)
-        : [...prev, pref]
+      prev.includes(pref) ? prev.filter((p) => p !== pref) : [...prev, pref]
     );
   };
 
@@ -166,7 +171,20 @@ export default function BookPackage() {
       <div className="bg-white p-8 rounded-lg shadow-xl max-w-3xl w-full">
         <h1 className="text-3xl font-bold mb-6 text-center">Book Package</h1>
         <div className="mb-4 text-xl font-semibold text-center">
-          <span className="uppercase">Package Price:</span> ${packagePrice.toFixed(2)}
+          <span className="uppercase">Package Price:</span>{" "}
+          {packageDetails.discountPrice &&
+          Number(packageDetails.discountPrice) < Number(packageDetails.regularPrice) ? (
+            <>
+              <span className="line-through text-red-500 mr-2">
+                ${Number(packageDetails.regularPrice).toFixed(2)}
+              </span>
+              <span className="text-green-600">
+                ${Number(packageDetails.discountPrice).toFixed(2)}
+              </span>
+            </>
+          ) : (
+            <span>${Number(packageDetails.regularPrice).toFixed(2)}</span>
+          )}
         </div>
         <form onSubmit={handleBooking} className="space-y-8">
           {travellers.map((traveller, index) => (
