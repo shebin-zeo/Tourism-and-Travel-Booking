@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { Handshake, Mountain, Headphones } from "lucide-react";
 import ChatBot from "../componets/ChatBot"; // Import the ChatBot component
 
 export default function Home() {
@@ -203,48 +204,29 @@ export default function Home() {
       </section>
 
       {/* Why Choose Us Section */}
-      <section className="py-12 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4 text-center">
-            Why Choose Us
-          </h2>
-          <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
-            Our commitment to personalized service, exclusive experiences, and seamless travel management makes us the premier choice for discerning travelers.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {/* Trusted Partnerships */}
-            <div className="text-center p-6 bg-white rounded-lg shadow-xl">
-              <img
-                src="https://img.icons8.com/fluency/48/000000/handshake.png"
-                alt="Trusted Partnerships"
-                className="mx-auto mb-4"
-              />
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Trusted Partnerships</h3>
-              <p className="text-gray-600">We work with top global partners to ensure the best quality and value.</p>
-            </div>
-            {/* Tailored Itineraries */}
-            <div className="text-center p-6 bg-white rounded-lg shadow-xl">
-              <img
-                src="https://img.icons8.com/color/48/000000/trekking.png"
-                alt="Tailored Itineraries"
-                className="mx-auto mb-4"
-              />
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Tailored Itineraries</h3>
-              <p className="text-gray-600">Every journey is personalized to meet your individual tastes and preferences.</p>
-            </div>
-            {/* 24/7 Support */}
-            <div className="text-center p-6 bg-white rounded-lg shadow-xl">
-              <img
-                src="https://img.icons8.com/color/48/000000/customer-support.png"
-                alt="24/7 Support"
-                className="mx-auto mb-4"
-              />
-              <h3 className="text-xl font-bold text-gray-800 mb-2">24/7 Support</h3>
-              <p className="text-gray-600">Our dedicated team is here to assist you before, during, and after your journey.</p>
-            </div>
+      <section className="py-16 bg-gray-50">
+      <div className="container mx-auto px-4 text-center">
+        <h2 className="text-3xl font-bold mb-6">Why Choose Us</h2>
+        <p className="mb-12 text-gray-600">We provide the best travel experiences tailored just for you.</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="bg-white rounded-2xl shadow p-6">
+            <Handshake className="mx-auto mb-4 text-blue-600" size={48} />
+            <h3 className="text-xl font-semibold mb-2">Trusted Partnerships</h3>
+            <p className="text-gray-600">We collaborate with top-rated service providers to ensure quality.</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow p-6">
+            <Mountain className="mx-auto mb-4 text-green-600" size={48} />
+            <h3 className="text-xl font-semibold mb-2">Unforgettable Adventures</h3>
+            <p className="text-gray-600">Explore stunning destinations with personalized itineraries.</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow p-6">
+            <Headphones className="mx-auto mb-4 text-yellow-600" size={48} />
+            <h3 className="text-xl font-semibold mb-2">24/7 Support</h3>
+            <p className="text-gray-600">Our team is available around the clock to assist you anytime.</p>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
       {/* What Our Travelers Say (Testimonials) Section */}
       <section className="py-12 bg-white">
