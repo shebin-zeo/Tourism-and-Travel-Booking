@@ -276,3 +276,67 @@ Thank you for choosing WanderSphere.
     });
   });
 };
+
+
+export const sendBookingCancellationByuser = async (booking) => {
+  const { package: pkg, user, refundAmount, penaltyPercentage } = booking;
+
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: user.email,
+    subject: `Cancellation Confirmation for ${pkg.title}`,
+    text: `Dear ${user.username},
+
+We have successfully received your cancellation request for the booking of "${pkg.title}."
+
+Refund Amount: $${refundAmount}
+Penalty Percentage Applied: ${penaltyPercentage}%
+
+If you have any questions or require further assistance, please feel free to contact our support team at your earliest convenience.
+
+Thank you for choosing WanderSphere.
+
+Warm regards,
+The WanderSphere Team`,
+    html: `
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #ffffff;">
+      <div style="text-align: center; padding-bottom: 15px; border-bottom: 1px solid #e0e0e0;">
+        <h2 style="color: #333; font-weight: 600; margin: 0;">Cancellation Confirmation</h2>
+      </div>
+      <div style="padding: 20px 0; color: #555; line-height: 1.6;">
+        <p>Dear <strong>${user.username}</strong>,</p>
+        <p>
+          We have successfully received your cancellation request for the booking of 
+          <strong>"${pkg.title}"</strong>.
+        </p>
+        <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 8px; background: #f9f9f9; border: 1px solid #ddd;"><strong>Refund Amount</strong></td>
+            <td style="padding: 8px; background: #f9f9f9; border: 1px solid #ddd;">$${refundAmount}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Penalty Percentage Applied</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${penaltyPercentage}%</td>
+          </tr>
+        </table>
+        <p>
+          If you have any questions or require further assistance, please feel free to contact our support team at your earliest convenience.
+        </p>
+        <p>Thank you for choosing WanderSphere.</p>
+      </div>
+      <div style="text-align: center; border-top: 1px solid #e0e0e0; padding-top: 15px;">
+        <p style="margin: 0; color: #777;">Warm regards,</p>
+        <p style="margin: 0; color: #777;"><strong>The WanderSphere Team</strong></p>
+      </div>
+    </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Cancellation email sent to ${user.email}`);
+  } catch (error) {
+    console.error("Error sending booking cancellation email:", error);
+    throw error;
+  }
+};

@@ -2,11 +2,38 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="https://res.cloudinary.com/drqoa7h5u/image/upload/v1744221106/island_hcwpmu.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta name="description" content="Wandersphere - Explore the world with our curated travel experiences and tourism packages." />
     <!-- Add the Cloudinary widget script here -->
     <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
-    <title>Vite + React</title>
+    <title>Wandersphere | Explore the World</title>
+
+    <script>
+      window.addEventListener('load', function () {
+        const originalTitle = "Wandersphere | Explore the World";
+        document.title = originalTitle;
+    
+        // Start the scroll effect after 3 seconds
+        setTimeout(function () {
+          let titleText = originalTitle + " ";
+          // Start interval for the scrolling effect
+          const intervalId = setInterval(function () {
+            titleText = titleText.substring(1) + titleText[0];
+            document.title = titleText;
+          }, 300);
+    
+          // Stop the scroll effect after 5 seconds and restore original title
+          setTimeout(function () {
+            clearInterval(intervalId);
+            document.title = originalTitle;
+          }, 5000);
+        }, 3000);
+      });
+    </script>
+    
+
   </head>
   <body>
     <div id="root"></div>

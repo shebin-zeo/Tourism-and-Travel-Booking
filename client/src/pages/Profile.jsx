@@ -346,7 +346,9 @@ export default function Profile() {
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
+      {/* Single ToastContainer placed here */}
       <ToastContainer position="bottom-right" autoClose={3000} />
+
       <h1 className="text-3xl font-bold text-center my-7">Profile</h1>
 
       {/* Tab Navigation */}
@@ -743,8 +745,6 @@ export default function Profile() {
 
       {/* Cancellation Confirmation Modal */}
       {showCancelModal && <CancelModal />}
-
-      <ToastContainer position="bottom-right" autoClose={3000} />
     </div>
   );
 }

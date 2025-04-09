@@ -1,5 +1,5 @@
 import Booking from '../models/booking.model.js';
-import { sendBookingConfirmation,sendBookingCancellation  } from '../utils/emailService.js';
+import { sendBookingConfirmation,sendBookingCancellation,sendBookingCancellationByuser  } from '../utils/emailService.js';
 import mongoose from 'mongoose';
 
 // GET all bookings (Admin only)
@@ -256,12 +256,14 @@ export const cancelBooking = async (req, res, next) => {
   try {
     const bookingId = req.params.id;
     // Find the booking and populate package data (for price)
-    const booking = await Booking.findById(bookingId).populate("package", "regularPrice discountPrice");
+    const booking = await Booking.findById(bookingId).populate("package", "title regularPrice discountPrice")
+    .populate("user", "username email"); 
+
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
     // Ensure the booking belongs to the user making the request
-    if (booking.user.toString() !== req.user.id) {
+    if (booking.user._id.toString() !== req.user.id) {
       return res.status(403).json({ message: "You are not authorized to cancel this booking." });
     }
     // Prevent cancellation if already cancelled or completed
@@ -301,6 +303,15 @@ export const cancelBooking = async (req, res, next) => {
     booking.penaltyPercentage = penaltyPercentage;
     booking.refundAmount = refundAmount;
     await booking.save();
+
+    // Send cancellation email (user cancellation)
+    try {
+      await sendBookingCancellationByuser(booking);
+      console.log(`Cancellation email sent to ${booking.user.email}`);
+    } catch (emailError) {
+      console.error("Error sending cancellation email:", emailError);
+      // Optionally continue even if the email fails
+    }
 
     res.status(200).json({
       success: true,
