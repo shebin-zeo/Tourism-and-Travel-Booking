@@ -16,12 +16,12 @@ export default function BookPackage() {
       country: "",
       contact: "",
       email: "",
-      usePrevious: false,
     },
   ]);
   const [selectedPreferences, setSelectedPreferences] = useState([]); // For extra preferences selection
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [showExtraPaymentModal, setShowExtraPaymentModal] = useState(false);
 
   // Fetch package details
   useEffect(() => {
@@ -70,24 +70,7 @@ export default function BookPackage() {
     const { name, value } = e.target;
     const updatedTravellers = [...travellers];
     updatedTravellers[index][name] = value;
-    if (name !== "usePrevious" && index > 0 && updatedTravellers[index].usePrevious) {
-      updatedTravellers[index].contact = updatedTravellers[index - 1].contact;
-      updatedTravellers[index].email = updatedTravellers[index - 1].email;
-    }
     setTravellers(updatedTravellers);
-  };
-
-  const handleUsePreviousChange = (index, e) => {
-    const isChecked = e.target.checked;
-    setTravellers((prev) => {
-      const updated = [...prev];
-      updated[index].usePrevious = isChecked;
-      if (isChecked && index > 0) {
-        updated[index].contact = updated[index - 1].contact;
-        updated[index].email = updated[index - 1].email;
-      }
-      return updated;
-    });
   };
 
   const addTraveller = () => {
@@ -98,9 +81,7 @@ export default function BookPackage() {
         age: "",
         gender: "",
         country: "",
-        contact: "",
-        email: "",
-        usePrevious: false,
+        // Contact and email are omitted from the form for additional travellers.
       },
     ]);
   };
@@ -114,9 +95,16 @@ export default function BookPackage() {
 
   // Handle extra preference checkbox toggling.
   const handlePreferenceToggle = (pref) => {
+    // Check if preference is already selected
+    const isSelected = selectedPreferences.includes(pref);
+    // Update selected preferences
     setSelectedPreferences((prev) =>
-      prev.includes(pref) ? prev.filter((p) => p !== pref) : [...prev, pref]
+      isSelected ? prev.filter((p) => p !== pref) : [...prev, pref]
     );
+    // If this preference is newly selected, show the extra payment modal
+    if (!isSelected) {
+      setShowExtraPaymentModal(true);
+    }
   };
 
   // Handle booking submission and redirect to PaymentPage.
@@ -124,8 +112,24 @@ export default function BookPackage() {
     e.preventDefault();
     setLoading(true);
     setErrorMsg("");
-    // Include selectedPreferences in the payload.
-    const payload = { packageId: id, travellers, selectedPreferences };
+
+    // For additional travellers (index > 0), prepopulate 'contact' and 'email' with the primary traveller's values.
+    const modifiedTravellers = travellers.map((trav, index) => {
+      if (index > 0) {
+        return {
+          ...trav,
+          contact: travellers[0].contact,
+          email: travellers[0].email,
+        };
+      }
+      return trav;
+    });
+
+    const payload = {
+      packageId: id,
+      travellers: modifiedTravellers,
+      selectedPreferences,
+    };
 
     try {
       const res = await fetch("/api/bookings", {
@@ -168,6 +172,25 @@ export default function BookPackage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <ToastContainer position="top-right" autoClose={3000} />
+      
+      {/* Modal for extra payment information */}
+      {showExtraPaymentModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-8 rounded shadow-lg max-w-md mx-auto text-center">
+            <h2 className="text-2xl font-bold mb-4">Additional Payment Notice</h2>
+            <p className="mb-6">
+              You have selected a special preference/dietary requirement. Please note that an extra payment will be required during your journey.
+            </p>
+            <button
+              onClick={() => setShowExtraPaymentModal(false)}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-200"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white p-8 rounded-lg shadow-xl max-w-3xl w-full">
         <h1 className="text-3xl font-bold mb-6 text-center">Book Package</h1>
         <div className="mb-4 text-xl font-semibold text-center">
@@ -251,41 +274,32 @@ export default function BookPackage() {
                     required
                   />
                 </div>
-                <div>
-                  <label className="block text-gray-700">Contact No</label>
-                  <input
-                    type="text"
-                    name="contact"
-                    value={traveller.contact}
-                    onChange={(e) => handleTravellerChange(index, e)}
-                    disabled={index > 0 && traveller.usePrevious}
-                    className="mt-1 w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={traveller.email}
-                    onChange={(e) => handleTravellerChange(index, e)}
-                    disabled={index > 0 && traveller.usePrevious}
-                    className="mt-1 w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                    required
-                  />
-                </div>
-                {index > 0 && (
-                  <div className="md:col-span-2 flex items-center mt-2">
-                    <input
-                      type="checkbox"
-                      name="usePrevious"
-                      checked={traveller.usePrevious || false}
-                      onChange={(e) => handleUsePreviousChange(index, e)}
-                      className="mr-2"
-                    />
-                    <span className="text-gray-700 text-sm">Same as previous</span>
-                  </div>
+                {/* Only render Contact No and Email for the first traveller */}
+                {index === 0 && (
+                  <>
+                    <div>
+                      <label className="block text-gray-700">Contact No</label>
+                      <input
+                        type="text"
+                        name="contact"
+                        value={traveller.contact}
+                        onChange={(e) => handleTravellerChange(index, e)}
+                        className="mt-1 w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-700">Email</label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={traveller.email}
+                        onChange={(e) => handleTravellerChange(index, e)}
+                        className="mt-1 w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        required
+                      />
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -333,9 +347,6 @@ export default function BookPackage() {
         </form>
         <div className="mt-4 text-center text-xl font-bold text-green-600">
           Total Amount: ${totalAmount.toFixed(2)}
-        </div>
-        <div className="mt-2 text-center text-sm text-gray-700">
-          Please make the payment within 7 days for admin approval.
         </div>
         <ToastContainer position="top-right" autoClose={3000} />
       </div>

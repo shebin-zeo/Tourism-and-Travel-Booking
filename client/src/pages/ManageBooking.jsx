@@ -19,7 +19,7 @@ export default function AdminBookings() {
     type: "",
     visible: false,
   });
-  // New state for view details modal:
+  // State for view details modal
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [bookingToView, setBookingToView] = useState(null);
 
@@ -135,6 +135,13 @@ export default function AdminBookings() {
 
   const confirmDelete = async () => {
     if (!bookingToDelete) return;
+    // Retrieve the booking details
+    const booking = bookings.find((b) => b._id === bookingToDelete);
+    // Prevent cancellation if booking is approved.
+    if (booking && booking.approved) {
+      showNotification("Approved bookings cannot be cancelled by admin.", "error");
+      return closeDeleteModal();
+    }
     try {
       setDeleteLoading(true);
       const token = localStorage.getItem("access_token");
@@ -156,6 +163,23 @@ export default function AdminBookings() {
       }
       setBookings((prev) => prev.filter((b) => b._id !== bookingToDelete));
       showNotification("Booking deleted successfully!", "success");
+
+      // After deleting the booking, call the new backend endpoint to send a cancellation email.
+      if (booking?.user?.email) {
+        try {
+          await fetch(`/api/bookings/notify-cancellation/${bookingToDelete}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: token ? `Bearer ${token}` : "",
+            },
+            credentials: "include",
+          });
+        } catch (emailErr) {
+          console.error("Error sending cancellation email:", emailErr);
+          showNotification("Booking deleted, but email notification failed.", "error");
+        }
+      }
     } catch (err) {
       showNotification(err.message, "error");
     } finally {
@@ -387,23 +411,27 @@ export default function AdminBookings() {
                   </p>
                   <p>
                     <span className="font-semibold">Contact:</span>{" "}
-                    {traveller.contact}{" "}
-                    <a
-                      href={`tel:${traveller.contact}`}
-                      className="text-blue-600 hover:underline ml-2"
-                    >
-                      Call
-                    </a>
+                    {index === 0 ? traveller.contact : "Same as primary"}
+                    {index === 0 && (
+                      <a
+                        href={`tel:${traveller.contact}`}
+                        className="text-blue-600 hover:underline ml-2"
+                      >
+                        Call
+                      </a>
+                    )}
                   </p>
                   <p>
                     <span className="font-semibold">Email:</span>{" "}
-                    {traveller.email}{" "}
-                    <a
-                      href={`mailto:${traveller.email}`}
-                      className="text-blue-600 hover:underline ml-2"
-                    >
-                      Email
-                    </a>
+                    {index === 0 ? traveller.email : "Same as primary"}
+                    {index === 0 && (
+                      <a
+                        href={`mailto:${traveller.email}`}
+                        className="text-blue-600 hover:underline ml-2"
+                      >
+                        Email
+                      </a>
+                    )}
                   </p>
                 </div>
               ))
@@ -515,7 +543,9 @@ export default function AdminBookings() {
         <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 border border-gray-200 z-50">
           <p
             className={`text-lg ${
-              notification.type === "success" ? "text-green-600" : "text-red-600"
+              notification.type === "success"
+                ? "text-green-600"
+                : "text-red-600"
             }`}
           >
             {notification.message}

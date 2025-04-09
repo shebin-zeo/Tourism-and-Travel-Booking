@@ -518,6 +518,8 @@ export default function Profile() {
                           ) : (
                             "Cancelled"
                           )
+                        ) : booking.approved ? (
+                          <span className="text-gray-600">Not cancellable</span>
                         ) : !booking.completed ? (
                           <button
                             onClick={() => openCancelModal(booking)}

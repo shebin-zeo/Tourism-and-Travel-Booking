@@ -1,5 +1,5 @@
 import Booking from '../models/booking.model.js';
-import { sendBookingConfirmation } from '../utils/emailService.js';
+import { sendBookingConfirmation,sendBookingCancellation  } from '../utils/emailService.js';
 import mongoose from 'mongoose';
 
 // GET all bookings (Admin only)
@@ -70,15 +70,36 @@ export const createBooking = async (req, res, next) => {
 // Delete a booking (Admin only)
 export const deleteBooking = async (req, res, next) => {
   try {
-    const booking = await Booking.findByIdAndDelete(req.params.id);
+    // First, find the booking with necessary info
+    const booking = await Booking.findById(req.params.id)
+      .populate('package', 'title')
+      .populate('user', 'username email');
+
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
-    return res.status(200).json({ success: true, message: 'Booking deleted successfully' });
+
+    // Send cancellation email before deletion
+    try {
+      await sendBookingCancellation(booking.user.email, booking);
+      console.log(`Cancellation email sent to ${booking.user.email}`);
+    } catch (emailError) {
+      console.error('Error sending cancellation email:', emailError);
+      // Not failing on email error, just logging it
+    }
+
+    // Delete booking
+    await Booking.findByIdAndDelete(req.params.id);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Booking deleted and cancellation email sent.',
+    });
   } catch (error) {
     next(error);
   }
 };
+
 
 // Approve a booking (Admin only)
 export const approveBooking = async (req, res, next) => {

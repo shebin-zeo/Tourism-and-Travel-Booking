@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import ChatBot from "../componets/ChatBot"; // Import the ChatBot component
 
 export default function Home() {
-  // Fetch packages from API
+  // Fetch packages from API (for dynamic travel experiences)
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -97,22 +97,21 @@ export default function Home() {
         style={{
           backgroundImage:
             "url('https://images.unsplash.com/photo-1528543606781-2f6e6857f318?q=80&w=1965&auto=format&fit=crop&ixlib=rb-4.0.3')",
-          height: "200vh", // Increase height to allow scrolling and reveal animations
+          height: "200vh", // Large height to enable smooth scroll animations
         }}
       >
         <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center text-white px-4">
           <motion.h1
             style={{ opacity: headingOpacity, y: headingY }}
-            className="text-5xl md:text-6xl font-bold"
+            className="text-5xl md:text-6xl font-bold text-center"
           >
             Explore Your Dream Destinations
           </motion.h1>
           <motion.p
             style={{ opacity: subOpacity, y: subY }}
-            className="mt-4 text-xl md:text-2xl max-w-2xl"
+            className="mt-4 text-xl md:text-2xl max-w-2xl text-center"
           >
-            Find the best travel packages and experience unforgettable adventures
-            with us.
+            Discover exclusive travel experiences and bespoke itineraries curated just for you.
           </motion.p>
           <motion.div style={{ opacity: subOpacity, y: subY }}>
             <Link
@@ -125,161 +124,148 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Packages Section */}
-      <section className="py-12">
+      {/* Exclusive Travel Experiences Section */}
+      <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
-            Featured Packages
+          <h2 className="text-3xl font-bold text-gray-800 mb-4 text-center">
+            Exclusive Travel Experiences
           </h2>
-          {loading && (
+          <p className="text-center text-gray-600 mb-8 max-w-3xl mx-auto">
+            Our curated experiences are designed to provide you with luxurious and authentic journeys. Enjoy hand-picked packages and personalized adventures.
+          </p>
+          {loading ? (
             <div className="text-center">
-              <p className="text-gray-600">Loading packages...</p>
+              <p className="text-gray-600">Loading experiences...</p>
             </div>
-          )}
-          {error && (
+          ) : error ? (
             <div className="text-center">
               <p className="text-red-600">{error}</p>
             </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {packages.slice(0, 3).map((pkg) => {
+                // Check if the package has an offer
+                const hasOffer = pkg.discountPrice && Number(pkg.discountPrice) < Number(pkg.regularPrice);
+                return (
+                  <motion.div
+                    key={pkg._id}
+                    whileHover={{ scale: 1.03 }}
+                    className="bg-white rounded-lg shadow-xl overflow-hidden relative"
+                  >
+                    {hasOffer && (
+                      <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded z-10">
+                        OFFER
+                      </span>
+                    )}
+                    <div className="relative">
+                      <img
+                        src={
+                          pkg.imageUrls?.[0] ||
+                          "https://images.unsplash.com/photo-1503220317375-aaad61436b1b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80"
+                        }
+                        alt={pkg.title}
+                        className="w-full h-56 object-cover"
+                      />
+                      {pkg.enabled ? (
+                        <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                          <Link
+                            to={`/package/${pkg._id}`}
+                            className="px-4 py-2 bg-yellow-500 text-white font-semibold rounded"
+                          >
+                            View Details
+                          </Link>
+                        </div>
+                      ) : (
+                        <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex flex-col items-center justify-center">
+                          <p className="text-white text-xl font-semibold">Unavailable</p>
+                          <p className="text-gray-300 text-sm text-center px-2">This experience is not available at the moment.</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="text-xl font-bold text-gray-800 mb-2">{pkg.title}</h3>
+                      <p className="text-gray-600 mb-2">{pkg.destination}</p>
+                      {hasOffer ? (
+                        <p className="text-lg font-bold">
+                          <span className="text-red-500 line-through mr-2">${pkg.regularPrice}</span>
+                          <span className="text-green-600">${pkg.discountPrice}</span>
+                        </p>
+                      ) : (
+                        <p className="text-indigo-600 text-lg font-bold">${pkg.regularPrice}</p>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {packages.map((pkg) => {
-              // Determine if this package has an offer (discount)
-              const hasOffer =
-                pkg.discountPrice &&
-                Number(pkg.discountPrice) < Number(pkg.regularPrice);
-              return (
-                <div
-                  key={pkg._id}
-                  className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 relative"
-                >
-                  {/* OFFER Badge (displayed if a discount exists) */}
-                  {hasOffer && (
-                    <span className="absolute top-2 left-2 bg-red-600 text-white text-sm font-bold px-2 py-1 rounded z-10">
-                      OFFER
-                    </span>
-                  )}
-                  {/* Package Image with Overlays */}
-                  <div className="relative">
-                    <img
-                      src={
-                        pkg.imageUrls?.[0] ||
-                        "https://images.unsplash.com/photo-1503220317375-aaad61436b1b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80"
-                      }
-                      alt={pkg.title}
-                      className="w-full h-64 object-cover"
-                    />
-                    {/* Unavailable Overlay */}
-                    {!pkg.enabled && (
-                      <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex flex-col items-center justify-center">
-                        <p className="text-white text-xl font-semibold mb-2">
-                          Unavailable
-                        </p>
-                        <p className="text-gray-300 text-sm text-center px-2">
-                          This package is currently not available.
-                        </p>
-                      </div>
-                    )}
-                    {/* "View Details" button rendered only if package is enabled */}
-                    {pkg.enabled && (
-                      <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-                        <Link
-                          to={`/package/${pkg._id}`}
-                          className="px-4 py-2 bg-yellow-500 text-white font-semibold rounded"
-                        >
-                          View Details
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                  {/* Package Information */}
-                  <div className="p-6">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                      {pkg.title}
-                    </h3>
-                    <p className="text-gray-600 mb-4">{pkg.destination}</p>
-                    {hasOffer ? (
-                      <p className="mt-2 text-xl font-bold">
-                        <span className="text-red-500 line-through mr-2">
-                          ${pkg.regularPrice}
-                        </span>
-                        <span className="text-green-600">
-                          ${pkg.discountPrice}
-                        </span>
-                      </p>
-                    ) : (
-                      <p className="mt-2 text-indigo-600 text-xl font-bold">
-                        ${pkg.regularPrice}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </div>
       </section>
 
-      {/* Top Destinations Section */}
-      <section className="py-12 bg-white">
+      {/* Why Choose Us Section */}
+      <section className="py-12 bg-gray-50">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
-            Top Destinations
+          <h2 className="text-3xl font-bold text-gray-800 mb-4 text-center">
+            Why Choose Us
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-            <div className="relative group">
+          <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
+            Our commitment to personalized service, exclusive experiences, and seamless travel management makes us the premier choice for discerning travelers.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+            {/* Trusted Partnerships */}
+            <div className="text-center p-6 bg-white rounded-lg shadow-xl">
               <img
-                src="https://images.unsplash.com/photo-1431274172761-fca41d930114?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80"
-                alt="Paris, France"
-                className="w-full h-64 object-cover rounded-lg shadow-lg"
+                src="https://img.icons8.com/fluency/48/000000/handshake.png"
+                alt="Trusted Partnerships"
+                className="mx-auto mb-4"
               />
-              <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg">
-                <h3 className="text-white text-2xl font-semibold">Paris</h3>
-              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Trusted Partnerships</h3>
+              <p className="text-gray-600">We work with top global partners to ensure the best quality and value.</p>
             </div>
-            <div className="relative group">
+            {/* Tailored Itineraries */}
+            <div className="text-center p-6 bg-white rounded-lg shadow-xl">
               <img
-                src="https://images.unsplash.com/photo-1539367628448-4bc5c9d171c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=435&q=80"
-                alt="Bali, Indonesia"
-                className="w-full h-64 object-cover rounded-lg shadow-lg"
+                src="https://img.icons8.com/color/48/000000/trekking.png"
+                alt="Tailored Itineraries"
+                className="mx-auto mb-4"
               />
-              <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg">
-                <h3 className="text-white text-2xl font-semibold">Bali</h3>
-              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Tailored Itineraries</h3>
+              <p className="text-gray-600">Every journey is personalized to meet your individual tastes and preferences.</p>
             </div>
-            <div className="relative group">
+            {/* 24/7 Support */}
+            <div className="text-center p-6 bg-white rounded-lg shadow-xl">
               <img
-                src="https://images.unsplash.com/photo-1499092346589-b9b6be3e94b2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1171&q=80"
-                alt="New York, USA"
-                className="w-full h-64 object-cover rounded-lg shadow-lg"
+                src="https://img.icons8.com/color/48/000000/customer-support.png"
+                alt="24/7 Support"
+                className="mx-auto mb-4"
               />
-              <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg">
-                <h3 className="text-white text-2xl font-semibold">New York</h3>
-              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">24/7 Support</h3>
+              <p className="text-gray-600">Our dedicated team is here to assist you before, during, and after your journey.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-12 bg-gray-100">
+      {/* What Our Travelers Say (Testimonials) Section */}
+      <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
             What Our Travelers Say
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="bg-gray-50 p-6 rounded-lg shadow-xl">
               <p className="text-gray-600 mb-4">
                 “This travel service exceeded all my expectations! Every detail was taken care of, making my trip stress-free and truly memorable.”
               </p>
               <h4 className="text-lg font-bold text-gray-800">- Sarah L.</h4>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="bg-gray-50 p-6 rounded-lg shadow-xl">
               <p className="text-gray-600 mb-4">
-                “I had an amazing experience exploring new destinations. The packages offered were diverse and perfectly suited my adventurous spirit.”
+                “I had an amazing experience exploring new destinations. The tailored itineraries suited my adventurous spirit perfectly.”
               </p>
               <h4 className="text-lg font-bold text-gray-800">- Mark T.</h4>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="bg-gray-50 p-6 rounded-lg shadow-xl">
               <p className="text-gray-600 mb-4">
                 “A fantastic service with attention to detail! I loved every moment of my trip, and the team ensured I had a personalized experience.”
               </p>
@@ -299,7 +285,7 @@ export default function Home() {
             Subscribe for Exclusive Deals
           </h2>
           <p className="text-white mb-6">
-            Join our newsletter and stay updated with the latest travel offers and destinations.
+            Join our newsletter and stay updated with the latest travel offers and insider tips.
           </p>
           <form onSubmit={handleSubscribe} className="max-w-md mx-auto flex flex-col sm:flex-row gap-4">
             <input
@@ -328,7 +314,7 @@ export default function Home() {
       {/* Popup Modal for subscription result */}
       {popup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
             <p className={`text-lg ${popup.type === "success" ? "text-green-600" : "text-red-600"}`}>
               {popup.message}
             </p>

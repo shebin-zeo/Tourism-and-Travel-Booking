@@ -54,8 +54,6 @@ Your booking (ID: ${booking._id}) for the package "${booking.package.title}" on 
 Adult Travellers: ${adultTravellers.map((t) => t.name).join(", ")}
 Child Travellers: ${childTravellers.map((t) => t.name).join(", ")}
 
-Important: Please complete your payment within 7 days to confirm your booking.
-
 For any queries, contact us at wandersphereindia@outlook.com or call +91 9567834271.
 
 Thank you for booking with WanderSphere!`,
@@ -98,11 +96,6 @@ Thank you for booking with WanderSphere!`,
           <ul style="list-style: none; padding: 0;">
             ${childTravellersList}
           </ul>
-          
-          <h3 style="font-size: 18px; font-weight: bold; margin-top: 20px;">Payment Reminder</h3>
-          <p style="background-color: #fff3cd; padding: 10px; border-radius: 4px; font-size: 16px; margin-top: 10px;">
-            ⚠️ Please complete your payment within <strong>7 days</strong> to confirm your booking.
-          </p>
           
           <h3 style="font-size: 18px; font-weight: bold; margin-top: 20px;">Need Assistance?</h3>
           <div style="margin-top: 10px; padding: 10px; background-color: #f0f0f0; border-radius: 4px;">
@@ -235,4 +228,51 @@ WanderSphere Team`,
     console.error("Error generating guide appointment PDF:", err);
     throw err;
   }
+};
+
+//send email for admin cancell booking
+export const sendBookingCancellation  = async (to, booking) => {
+  const mailOptions = {
+    from: process.env.EMAIL_FROM, // e.g., "WanderSphere <yourgmail@gmail.com>"
+    to, // Recipient's email
+    subject: "Booking Cancellation Notice",
+    text: `Hello,
+
+Your booking (ID: ${booking._id}) for the package "${booking.package.title}" has been cancelled by our admin.
+We apologize for the inconvenience caused. Your refund will be processed shortly.
+
+Thank you for choosing WanderSphere.
+`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; padding: 0;">
+        <!-- Header -->
+        <div style="background-color: #f44336; padding: 20px; text-align: center; border-radius: 4px 4px 0 0;">
+          <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Booking Cancellation Notice</h1>
+        </div>
+        <!-- Body -->
+        <div style="padding: 20px; color: #333;">
+          <p style="font-size: 16px;">Hello,</p>
+          <p style="font-size: 16px;">
+            We regret to inform you that your booking (ID: ${booking._id}) for the package "${booking.package.title}" has been cancelled by our admin.
+            We apologize for any inconvenience caused. Your refund will be initiated shortly.
+          </p>
+          <p style="font-size: 16px;">Thank you for choosing WanderSphere.</p>
+        </div>
+        <!-- Footer -->
+        <div style="background-color: #f7f7f7; padding: 15px; text-align: center; font-size: 14px; color: #777; border-radius: 0 0 4px 4px;">
+          <p>&copy; ${new Date().getFullYear()} WanderSphere. All rights reserved.</p>
+        </div>
+      </div>
+    `,
+  };
+
+  return new Promise((resolve, reject) => {
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending cancellation email:", error);
+        return reject(error);
+      }
+      resolve(info);
+    });
+  });
 };
