@@ -74,7 +74,15 @@ export default function SearchResults() {
             )}
             <h2 className="text-xl font-bold mt-4">{pkg.title}</h2>
             <p className="text-gray-700 mt-2">{pkg.destination}</p>
-            <p className="text-green-600 font-bold mt-2">${pkg.regularPrice}</p>
+             {/* Price display with discount logic */}
+             {pkg.discountPrice && Number(pkg.discountPrice) < Number(pkg.regularPrice) ? (
+              <p className="mt-2 font-bold">
+                <span className="text-red-500 line-through mr-2">${pkg.regularPrice}</span>
+                <span className="text-green-600">${pkg.discountPrice}</span>
+              </p>
+            ) : (
+              <p className="text-green-600 font-bold mt-2">${pkg.regularPrice}</p>
+            )}
             <Link
               to={`/package/${pkg._id}`}
               className="mt-4 inline-block bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 transition-colors duration-300"
