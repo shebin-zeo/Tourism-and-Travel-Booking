@@ -28,7 +28,7 @@ export const chatHandler = async (req, res) => {
             },
             {
               role: "user",
-              content: message
+              content: message 
             }
           ]
         })
